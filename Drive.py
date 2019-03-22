@@ -1,8 +1,14 @@
 from Constants import *
+from enum import Enum
+
 from ev3dev2.wheel import EV3Tire
+from ev3dev2.sensor.lego import GyroSensor
+from ev3dev2.sensor import INPUT_1
+
 import time
 
 tire = EV3Tire()
+gyroSensor = GyroSensor(INPUT_1)
 
 class Drive:
     def __init__(self, drive_left, drive_right, gyro):
@@ -15,6 +21,15 @@ class Drive:
 
         self.integral = 0
         self.last_error = 0
+
+    def gyro_calibrate(self):
+        time.sleep(1)
+        self.gyro_zero()
+        time.sleep(2)
+
+    def gyro_zero(self):
+        gyroSensor.mode = 'GYRO-RATE'
+        gyroSensor.mode = 'GYRO-ANG'
 
     def drive_speed_update(self, compensate):
         self.drive_left.on(DRIVE_SPEED - compensate, brake= True)
@@ -42,12 +57,26 @@ class Drive:
         #print('Left: ' + str(self.dist_left))
         #print('Right: ' + str(self.dist_right))
 
+    # DRIVE FUNCTIONS
+
     def drive_dist(self, desired_dist):
         total_rotations = desired_dist / tire.circumference_mm
         while self.drive_left.position / self.drive_left.count_per_rot and self.drive_right.position / self.drive_right.count_per_rot < total_rotations:
-            drive.drive_speed_update(self.drive_pid_update(0))
+            self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
             print(self.drive_left.position / self.drive_left.count_per_rot)
             time.sleep(CYCLE_TIME)
+    
+    def drive_indef(self):
+        self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
+        time.sleep(CYCLE_TIME)
+
+    def drive_turn(self, direction):
+        self.gyro_zero()
+        while self.gyro.value != direction:
+            self.drive_speed_update(self.drive_pid_update(direction))
+            time.sleep(CYCLE_TIME)
+
+
 
     # def basic_straight(self):
     #     self.drive_left.on_for_rotations(10)
@@ -56,3 +85,8 @@ class Drive:
     # def basic_turn_left(self):
     #     self.drive_left.stop()
     #     self.drive_right.on_for_degrees(360)
+
+class Direction(Enum):
+    LEFT = -90
+    RIGHT = 90
+    STRAIGHT = 0 

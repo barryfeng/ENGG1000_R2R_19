@@ -1,4 +1,4 @@
-from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_3, INPUT_4
+from ev3dev2.sensor import INPUT_2, INPUT_3, INPUT_4
 from ev3dev2.sensor.lego import ColorSensor, GyroSensor, UltrasonicSensor
 from ev3dev2.led import Leds
 from ev3dev2.sound import Sound
@@ -15,7 +15,7 @@ import datetime, time, threading
 #     threading.Timer(CYCLE_TIME, periodic_actions).start()
 
 def periodic_drive(setpoint):
-    drive.drive_speed_update(drive.drive_pid_update(setpoint)
+    drive.drive_speed_update(drive.drive_pid_update(setpoint))
     time.sleep(CYCLE_TIME)
 
 # Start Robot Init
@@ -25,10 +25,8 @@ btn = Button()
 
 leftMotor = LargeMotor(OUTPUT_A)
 rightMotor = LargeMotor(OUTPUT_B)
-gyroSensor = GyroSensor(INPUT_1)
 
 start_time = int(time.time())
-
 # try:
 #     leftMotor = LargeMotor(OUTPUT_A)
 #     rightMotor = LargeMotor(OUTPUT_B)
@@ -41,24 +39,12 @@ start_time = int(time.time())
 #     print(connection_error)
 
 drive = Drive(leftMotor, rightMotor, gyroSensor)
+
 #us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
 
 def init_robot():
-    gyro_calibrate()
+    drive.gyro_calibrate()
     #ultrasound_arm_calibrate()
-
-def gyro_calibrate():
-    leds.set_color('LEFT','RED') #Begin Wait Sequence
-    leds.set_color('RIGHT','RED')
-    time.sleep(1)
-    gyro_zero()
-    time.sleep(2)
-    leds.set_color('LEFT','AMBER')
-    leds.set_color('RIGHT','AMBER')
-
-def gyro_zero():
-    gyroSensor.mode = 'GYRO-RATE'
-    gyroSensor.mode = 'GYRO-ANG'
 
 # def ultrasound_arm_calibrate():
 #     sound.speak('Move the arm to right hardstop. Calibrating arm in two seconds!')
@@ -99,11 +85,10 @@ def main():
     # while int(time.time()) - start_time >= 3:
     #     periodic_drive(90)
     drive.drive_dist(600) #in mm
-
+    drive.drive_turn(Direction.LEFT)
 
 if __name__ == '__main__':
     init_robot()
     print('Robot initialised, press enter to run program')
     btn.wait_for_bump(btn.backspace,1000)
     main()
-
