@@ -15,8 +15,7 @@ import datetime, time, threading
 #     threading.Timer(CYCLE_TIME, periodic_actions).start()
 
 def periodic_drive(setpoint):
-    compensate = drive.drive_pid_update(setpoint)
-    drive.drive_update(compensate)
+    drive.drive_speed_update(drive.drive_pid_update(setpoint)
     time.sleep(CYCLE_TIME)
 
 # Start Robot Init
@@ -95,10 +94,11 @@ def gyro_zero():
 #   Drive.drive_start(update_gyro_pid(target_angle))
 
 def main():
-    while int(time.time()) - start_time < 3:
-        periodic_drive(0)
-    while int(time.time()) - start_time >= 3:
-        periodic_drive(90)
+    # while int(time.time()) - start_time < 3:
+    #     periodic_drive(0)
+    # while int(time.time()) - start_time >= 3:
+    #     periodic_drive(90)
+    drive.drive_dist(600) #in mm
 
 
 if __name__ == '__main__':
