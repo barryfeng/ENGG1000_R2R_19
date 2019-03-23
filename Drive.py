@@ -96,7 +96,7 @@ class Drive:
         setpoint = current_dir + direction        
         while True:
             self.drive_speed_update(self.drive_pid_update(direction))
-            if setpoint - TURNING_ACC <= self.gyro.value() <= setpoint + TURNING_ACC/2:
+            if setpoint - TURNING_ACC/2 <= self.gyro.value() <= setpoint + TURNING_ACC/2:
                 break
             time.sleep(CYCLE_TIME)
         self.drive_stop()
@@ -113,8 +113,7 @@ class Drive:
 
     def drive_rescue_logged_turn(self):
         while True:
-            self.drive_turn_update(self.drive_pid_update(Direction.RIGHT))
-
+            self.drive_turn_update(self.drive_pid_update(Direction.START_DIR))
 
 
     # def basic_straight(self):
@@ -126,6 +125,12 @@ class Drive:
     #     self.drive_right.on_for_degrees(360)
 
 class Direction(Enum):
+    # Turning directions
     LEFT = -90
     RIGHT = 90
-    STRAIGHT = 0 
+    STRAIGHT = 0
+
+    # Search directions
+    START_DIR = 90
+    END_DIR = -90 
+

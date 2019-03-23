@@ -80,8 +80,12 @@ def main():
     drive.drive_dist(300) #in mm
     drive.drive_spot_turn(Direction.LEFT)
 
+def spot_turn():
+    drive.drive_spot_turn(Direction.LEFT)
+    drive.drive_spot_turn(Direction.RIGHT)
+
 if __name__ == '__main__':
     init_robot()
     selection = input("Robot initialised, type function to run to run program (Drive indefinitely [0], drive then turn [1])")
     print("test msg stderr", file=sys.stderr)
-    main()
+    spot_turn()
