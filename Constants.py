@@ -28,5 +28,6 @@ COLOR_BLUE = 1
 COLOR_RED = 2
 
 TURNING_ACC = 2 #In deg
+ROTATION_ACC = 0.25 #In rotations
 
 

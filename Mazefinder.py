@@ -1,4 +1,4 @@
-from ev3dev2.sensor import INPUT_2, INPUT_3, INPUT_4
+from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_3, INPUT_4
 from ev3dev2.sensor.lego import ColorSensor, GyroSensor, UltrasonicSensor
 from ev3dev2.led import Leds
 from ev3dev2.sound import Sound
@@ -11,9 +11,6 @@ from UltrasonicArm import *
 
 import datetime, time, threading
 
-def eprint(self, *args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
 # Start Robot Init
 sound = Sound()
 leds = Leds()
@@ -21,8 +18,12 @@ btn = Button()
 
 leftMotor = LargeMotor(OUTPUT_A)
 rightMotor = LargeMotor(OUTPUT_B)
+gyroSensor = GyroSensor(INPUT_1)
+ultrasonicSensor = UltrasonicSensor(INPUT_2)
+
 
 start_time = int(time.time())
+
 # try:
 #     leftMotor = LargeMotor(OUTPUT_A)
 #     rightMotor = LargeMotor(OUTPUT_B)
@@ -34,7 +35,7 @@ start_time = int(time.time())
 # except DeviceNotFound as connection_error:
 #     print(connection_error)
 
-drive = Drive(leftMotor, rightMotor, gyroSensor)
+drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor)
 
 #us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
 
@@ -82,5 +83,5 @@ def main():
 if __name__ == '__main__':
     init_robot()
     selection = input("Robot initialised, type function to run to run program (Drive indefinitely [0], drive then turn [1])")
-    eprint("Test message to computer")
+    print("test msg stderr", file=sys.stderr)
     main()

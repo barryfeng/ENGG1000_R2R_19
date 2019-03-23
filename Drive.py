@@ -2,20 +2,19 @@ from Constants import *
 from enum import Enum
 
 from ev3dev2.wheel import EV3Tire
-from ev3dev2.sensor.lego import GyroSensor
-from ev3dev2.sensor import INPUT_1
+from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor
 from __future__ import print_function
 
 import time, sys, syslog
 
 tire = EV3Tire()
-gyroSensor = GyroSensor(INPUT_1)
 
 class Drive:
-    def __init__(self, drive_left, drive_right, gyro):
+    def __init__(self, drive_left, drive_right, gyro, ultrasonic):
         self.drive_left = drive_left
         self.drive_right = drive_right
         self.gyro = gyro
+        self.ultrasonic = ultrasonic
 
         self.dist_left = 0
         self.dist_right = 0
@@ -24,13 +23,15 @@ class Drive:
         self.last_error = 0
 
     def gyro_calibrate(self):
+        print('INIT: GYRO CALIBRATION', file = sys.stderr)
         time.sleep(1)
         self.gyro_zero()
         time.sleep(2)
+        print('END: GYRO CALIBRATION', file = sys.stderr, flush = True)
 
     def gyro_zero(self):
-        gyroSensor.mode = 'GYRO-RATE'
-        gyroSensor.mode = 'GYRO-ANG'
+        self.gyro.mode = 'GYRO-RATE'
+        self.gyro.mode = 'GYRO-ANG'
 
     def drive_speed_update(self, compensate):
         self.drive_left.on(DRIVE_SPEED - compensate, brake= True)
@@ -50,12 +51,12 @@ class Drive:
         compensate = error * GYRO_P + self.integral * GYRO_I + derivative * GYRO_D
 
         self.last_error = error
-        self.eprint(compensate)
+        print(compensate, file=sys.stderr)
         return compensate
 
     def drive_stop(self):
-        self.drive_left.stop()
-        self.drive_right.stop()
+        self.drive_left.off(brake=True)
+        self.drive_right.off(brake=True)
 
     def drive_dist_update(self):
         self.dist_left += (self.drive_left.speed/self.drive_left.count_per_rot) * CYCLE_TIME #Rotations per cycle time
@@ -63,40 +64,56 @@ class Drive:
         #print('Left: ' + str(self.dist_left))
         #print('Right: ' + str(self.dist_right))
 
-    def eprint(self, *args, **kwargs):
-        print(*args, file=sys.stderr, **kwargs)
-
     # DRIVE FUNCTIONS
+        
+    def drive_indef(self):
+        while True:
+            self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
+            time.sleep(CYCLE_TIME)
 
     def drive_dist(self, desired_dist):
         total_rotations = desired_dist / tire.circumference_mm
-        while self.drive_left.position / self.drive_left.count_per_rot and self.drive_right.position / self.drive_right.count_per_rot < total_rotations:
+        while True:
             self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
-            print(str(self.drive_left.position / self.drive_left.count_per_rot) + ' out of ' + str(total_rotations))
+            print(str(self.drive_left.position / self.drive_left.count_per_rot) + ' out of ' + str(total_rotations), file = sys.stderr)
+            if (total_rotations - ROTATION_ACC <= self.drive_left.position + self.drive_right.position) / 360 <= total_rotations + ROTATION_ACC:
+                break
             time.sleep(CYCLE_TIME)
-    
-    def drive_indef(self):
-        self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
-        time.sleep(CYCLE_TIME)
+        self.drive_stop()
+
+    def drive_ultrasonic (self, safe_dist):
+        while True:
+            self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
+            if self.ultrasonic <= safe_dist:
+                break
+            time.sleep(CYCLE_TIME)
+        self.drive_stop
+
+    # TURNING FUNCTIONS
 
     def drive_slow_turn(self, direction):
-        current_dir = gyroSensor.value()
+        current_dir = self.gyro.value()
         setpoint = current_dir + direction        
         while True:
             self.drive_speed_update(self.drive_pid_update(direction))
             if setpoint - TURNING_ACC <= self.gyro.value() <= setpoint + TURNING_ACC/2:
                 break
             time.sleep(CYCLE_TIME)
+        self.drive_stop()
 
     def drive_spot_turn(self, direction):
-        current_dir = gyroSensor.value()
+        current_dir = self.gyro.value()
         setpoint = current_dir + direction
         while True:
             self.drive_turn_update(self.drive_pid_update(setpoint))
-            if setpoint - TURNING_ACC/2 <= gyroSensor.value() <= setpoint + TURNING_ACC/2:
+            if setpoint - TURNING_ACC/2 <= self.gyro.value() <= setpoint + TURNING_ACC/2:
                 break
             time.sleep(CYCLE_TIME)
+        self.drive_stop()
 
+    def drive_rescue_logged_turn(self):
+        while True:
+            self.drive_turn_update(self.drive_pid_update(Direction.RIGHT))
 
 
 
