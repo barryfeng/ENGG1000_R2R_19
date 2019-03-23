@@ -11,12 +11,8 @@ from UltrasonicArm import *
 
 import datetime, time, threading
 
-# def periodic():
-#     threading.Timer(CYCLE_TIME, periodic_actions).start()
-
-def periodic_drive(setpoint):
-    drive.drive_speed_update(drive.drive_pid_update(setpoint))
-    time.sleep(CYCLE_TIME)
+def eprint(self, *args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 # Start Robot Init
 sound = Sound()
@@ -80,15 +76,11 @@ def init_robot():
 #   Drive.drive_start(update_gyro_pid(target_angle))
 
 def main():
-    # while int(time.time()) - start_time < 3:
-    #     periodic_drive(0)
-    # while int(time.time()) - start_time >= 3:
-    #     periodic_drive(90)
-    drive.drive_dist(600) #in mm
-    drive.drive_turn(Direction.LEFT)
+    drive.drive_dist(300) #in mm
+    drive.drive_spot_turn(Direction.LEFT)
 
 if __name__ == '__main__':
     init_robot()
-    print('Robot initialised, press enter to run program')
-    btn.wait_for_bump(btn.backspace,1000)
+    selection = input("Robot initialised, type function to run to run program (Drive indefinitely [0], drive then turn [1])")
+    eprint("Test message to computer")
     main()
