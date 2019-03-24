@@ -1,4 +1,5 @@
 from Constants import *
+from Data import *
 from enum import Enum
 
 from ev3dev2.wheel import EV3Tire
@@ -8,6 +9,7 @@ from __future__ import print_function
 import time, sys, syslog
 
 tire = EV3Tire()
+data = Data()
 
 class Drive:
     def __init__(self, drive_left, drive_right, gyro, ultrasonic):
@@ -19,8 +21,11 @@ class Drive:
         self.dist_left = 0
         self.dist_right = 0
 
-        self.integral = 0
-        self.last_error = 0
+        self.gyro_integral = 0
+        self.gyro_last_error = 0
+
+        self.ultrasonic_integral = 0
+        self.ultrasonic_last_error = 0
 
     def gyro_calibrate(self):
         print('INIT: GYRO CALIBRATION', file = sys.stderr)
@@ -33,57 +38,71 @@ class Drive:
         self.gyro.mode = 'GYRO-RATE'
         self.gyro.mode = 'GYRO-ANG'
 
-    def drive_speed_update(self, compensate):
-        self.drive_left.on(DRIVE_SPEED - compensate, brake= True)
-        self.drive_right.on(DRIVE_SPEED + compensate, brake=True)
+    def drive_zero_position(self):
+        self.drive_left.position = 0
+        self.drive_right.position = 0
+
+    def drive_speed_update(self, heading_compensate, dist_compensate = 0):
+        self.drive_left.on(DRIVE_SPEED + dist_compensate - heading_compensate, brake= True)
+        self.drive_right.on(DRIVE_SPEED + dist_compensate + heading_compensate, brake=True)
         self.drive_dist_update()
         #print(compensate)
 
-    def drive_turn_update(self, compensate):
-        self.drive_left.on(DRIVE_SPEED - compensate, brake= True)
-        self.drive_right.on(-DRIVE_SPEED + compensate, brake=True)
+    def drive_turn_update(self, heading_compensate, dist_compensate = 0):
+        self.drive_left.on(DRIVE_SPEED - heading_compensate, brake= True)
+        self.drive_right.on(-DRIVE_SPEED + heading_compensate, brake=True)
 
-    def drive_pid_update(self, setpoint):
+    def gyro_pid_update(self, setpoint):
         error = self.gyro.value() - setpoint
-        self.integral += (error * CYCLE_TIME)
-        derivative = (error - self.last_error) / CYCLE_TIME
+        self.gyro_integral += (error * CYCLE_TIME)
+        derivative = (error - self.gyro_last_error) / CYCLE_TIME
 
-        compensate = error * GYRO_P + self.integral * GYRO_I + derivative * GYRO_D
+        heading_compensate = error * GYRO_P + self.gyro_integral * GYRO_I + derivative * GYRO_D
 
-        self.last_error = error
-        print(compensate, file=sys.stderr)
-        return compensate
+        self.gyro_last_error = error
+        print(heading_compensate, file=sys.stderr)
+        return heading_compensate
+
+    def ultrasonic_pid_update(self, setpoint):
+        error = self.ultrasonic.value() - setpoint
+        self.ultrasonic_integral += (error * CYCLE_TIME)
+        derivative = (error - self.ultrasonic_last_error) / CYCLE_TIME
+
+        dist_compensate = error * US_P + self.ultrasonic_integral * US_I + derivative * US_D
+
+        self.ultrasonic_last_error = error
+        print(dist_compensate, file=sys.stderr)
+        return dist_compensate
 
     def drive_stop(self):
         self.drive_left.off(brake=True)
         self.drive_right.off(brake=True)
 
     def drive_dist_update(self):
-        self.dist_left += (self.drive_left.speed/self.drive_left.count_per_rot) * CYCLE_TIME #Rotations per cycle time
-        self.dist_right += (self.drive_right.speed/self.drive_right.count_per_rot) * CYCLE_TIME
-        #print('Left: ' + str(self.dist_left))
-        #print('Right: ' + str(self.dist_right))
+        self.dist_left = self.drive_left.position * tire.circumference_mm / self.drive_left.count_per_rot
+        self.dist_right = self.drive_left.position * tire.circumference_mm / self.drive_right.count_per_rot
+        return (self.dist_left + self.dist_right) / 2
 
     # DRIVE FUNCTIONS
         
     def drive_indef(self):
         while True:
-            self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
+            self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT))
             time.sleep(CYCLE_TIME)
 
     def drive_dist(self, desired_dist):
-        total_rotations = desired_dist / tire.circumference_mm
+        self.drive_zero_position()
         while True:
-            self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
-            print(str(self.drive_left.position / self.drive_left.count_per_rot) + ' out of ' + str(total_rotations), file = sys.stderr)
-            if (total_rotations - ROTATION_ACC <= self.drive_left.position + self.drive_right.position) / 360 <= total_rotations + ROTATION_ACC:
+            self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT))
+            print(self.drive_dist_update + ' out of ' + desired_dist, file = sys.stderr)
+            if desired_dist - DIST_ACC <= self.drive_dist_update <= desired_dist + DIST_ACC:
                 break
             time.sleep(CYCLE_TIME)
         self.drive_stop()
 
     def drive_ultrasonic (self, safe_dist):
         while True:
-            self.drive_speed_update(self.drive_pid_update(Direction.STRAIGHT))
+            self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT), self.ultrasonic_pid_update(safe_dist))
             if self.ultrasonic <= safe_dist:
                 break
             time.sleep(CYCLE_TIME)
@@ -95,7 +114,7 @@ class Drive:
         current_dir = self.gyro.value()
         setpoint = current_dir + direction        
         while True:
-            self.drive_speed_update(self.drive_pid_update(direction))
+            self.drive_speed_update(self.gyro_pid_update(direction))
             if setpoint - TURNING_ACC/2 <= self.gyro.value() <= setpoint + TURNING_ACC/2:
                 break
             time.sleep(CYCLE_TIME)
@@ -105,7 +124,7 @@ class Drive:
         current_dir = self.gyro.value()
         setpoint = current_dir + direction
         while True:
-            self.drive_turn_update(self.drive_pid_update(setpoint))
+            self.drive_turn_update(self.gyro_pid_update(setpoint))
             if setpoint - TURNING_ACC/2 <= self.gyro.value() <= setpoint + TURNING_ACC/2:
                 break
             time.sleep(CYCLE_TIME)
@@ -113,8 +132,7 @@ class Drive:
 
     def drive_rescue_logged_turn(self):
         while True:
-            self.drive_turn_update(self.drive_pid_update(Direction.START_DIR))
-
+            self.drive_turn_update(self.gyro_pid_update(Direction.START_DIR))
 
     # def basic_straight(self):
     #     self.drive_left.on_for_rotations(10)

@@ -19,6 +19,10 @@ GYRO_P = 0.2
 GYRO_I = 0
 GYRO_D = 0
 
+US_P = 0.0
+US_I = 0
+US_D = 0
+
 #Enablers
 DRIVE_PID_LOGGING = True
 DRIVE_POS_LOGGING = True
@@ -28,6 +32,6 @@ COLOR_BLUE = 1
 COLOR_RED = 2
 
 TURNING_ACC = 2 #In deg
-ROTATION_ACC = 0.25 #In rotations
+DIST_ACC = 10 #In rotations
 
 

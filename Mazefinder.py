@@ -20,8 +20,6 @@ leftMotor = LargeMotor(OUTPUT_A)
 rightMotor = LargeMotor(OUTPUT_B)
 gyroSensor = GyroSensor(INPUT_1)
 ultrasonicSensor = UltrasonicSensor(INPUT_2)
-
-
 start_time = int(time.time())
 
 # try:
@@ -41,6 +39,7 @@ drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor)
 
 def init_robot():
     drive.gyro_calibrate()
+    drive.drive_zero_position()
     #ultrasound_arm_calibrate()
 
 # def ultrasound_arm_calibrate():
@@ -52,14 +51,6 @@ def init_robot():
 #     ultrasound_arm.on_to_position(100, 90, True)
 #     ultrasound_arm.position = 0
 #     sound.speak('Arm calibration complete.')
-
-# End Robot Init
-
-# if drive_logging_enabled:
-#     drive_log_row = [iterated_time, speed_left + compensate, speed_right + compensate]
-#     with open(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").csv, 'a') as f:
-#         w = csv.writer(f)
-#         w.writerow(drive_log_row)
 
 # # Detect Target
 # def detect_target():
@@ -78,7 +69,6 @@ def init_robot():
 
 def main():
     drive.drive_dist(300) #in mm
-    drive.drive_spot_turn(Direction.LEFT)
 
 def spot_turn():
     drive.drive_spot_turn(Direction.LEFT)
