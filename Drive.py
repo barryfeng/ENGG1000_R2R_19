@@ -27,6 +27,9 @@ class Drive:
         self.ultrasonic_integral = 0
         self.ultrasonic_last_error = 0
 
+        self.drive_left.position_p = DRIVE_LEFT_P
+        self.drive_right.position_p = DRIVE_RIGHT_P
+
     def gyro_calibrate(self):
         print('INIT: GYRO CALIBRATION', file = sys.stderr)
         time.sleep(1)
@@ -55,9 +58,8 @@ class Drive:
     def gyro_pid_update(self, setpoint):
         error = self.gyro.value() - setpoint
         self.gyro_integral += (error * CYCLE_TIME)
-        derivative = (error - self.gyro_last_error) / CYCLE_TIME
 
-        heading_compensate = error * GYRO_P + self.gyro_integral * GYRO_I + derivative * GYRO_D
+        heading_compensate = error * GYRO_P + self.gyro_integral * GYRO_I
 
         self.gyro_last_error = error
         print(heading_compensate, file=sys.stderr)
@@ -115,7 +117,7 @@ class Drive:
         setpoint = current_dir + direction        
         while True:
             self.drive_speed_update(self.gyro_pid_update(direction))
-            if setpoint - TURNING_ACC/2 <= self.gyro.value() <= setpoint + TURNING_ACC/2:
+            if setpoint - TURNING_ACC <= self.gyro.value() <= setpoint + TURNING_ACC:
                 break
             time.sleep(CYCLE_TIME)
         self.drive_stop()
@@ -125,7 +127,7 @@ class Drive:
         setpoint = current_dir + direction
         while True:
             self.drive_turn_update(self.gyro_pid_update(setpoint))
-            if setpoint - TURNING_ACC/2 <= self.gyro.value() <= setpoint + TURNING_ACC/2:
+            if setpoint - TURNING_ACC <= self.gyro.value() <= setpoint + TURNING_ACC:
                 break
             time.sleep(CYCLE_TIME)
         self.drive_stop()
