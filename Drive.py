@@ -1,22 +1,20 @@
+#!/usr/bin/env python3
+
 from Constants import *
 from Data import *
 from enum import Enum
 
-from ev3dev2.wheel import EV3Tire
 from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor
-from __future__ import print_function
 
 import time, sys, syslog
 
-tire = EV3Tire()
 data = Data()
 
 class Drive:
-    def __init__(self, drive_left, drive_right, gyro, ultrasonic):
+    def __init__(self, drive_left, drive_right, gyro):
         self.drive_left = drive_left
         self.drive_right = drive_right
         self.gyro = gyro
-        self.ultrasonic = ultrasonic
 
         self.dist_left = 0
         self.dist_right = 0
@@ -45,13 +43,13 @@ class Drive:
         self.drive_left.position = 0
         self.drive_right.position = 0
 
-    def drive_speed_update(self, heading_compensate, dist_compensate = 0):
-        self.drive_left.on(DRIVE_SPEED + dist_compensate - heading_compensate, brake= True)
-        self.drive_right.on(DRIVE_SPEED + dist_compensate + heading_compensate, brake=True)
+    def drive_speed_update(self, heading_compensate):
+        self.drive_left.on(DRIVE_SPEED - heading_compensate, brake= True)
+        self.drive_right.on(DRIVE_SPEED + heading_compensate, brake=True)
         self.drive_dist_update()
         #print(compensate)
 
-    def drive_turn_update(self, heading_compensate, dist_compensate = 0):
+    def drive_turn_update(self, heading_compensate):
         self.drive_left.on(DRIVE_SPEED - heading_compensate, brake= True)
         self.drive_right.on(-DRIVE_SPEED + heading_compensate, brake=True)
 
@@ -65,24 +63,24 @@ class Drive:
         print(heading_compensate, file=sys.stderr)
         return heading_compensate
 
-    def ultrasonic_pid_update(self, setpoint):
-        error = self.ultrasonic.value() - setpoint
-        self.ultrasonic_integral += (error * CYCLE_TIME)
-        derivative = (error - self.ultrasonic_last_error) / CYCLE_TIME
+    # def ultrasonic_pid_update(self, setpoint):
+    #     error = self.ultrasonic.value() - setpoint
+    #     self.ultrasonic_integral += (error * CYCLE_TIME)
+    #     derivative = (error - self.ultrasonic_last_error) / CYCLE_TIME
 
-        dist_compensate = error * US_P + self.ultrasonic_integral * US_I + derivative * US_D
+    #     dist_compensate = error * US_P + self.ultrasonic_integral * US_I + derivative * US_D
 
-        self.ultrasonic_last_error = error
-        print(dist_compensate, file=sys.stderr)
-        return dist_compensate
+    #     self.ultrasonic_last_error = error
+    #     print(dist_compensate, file=sys.stderr)
+    #     return dist_compensate
 
     def drive_stop(self):
         self.drive_left.off(brake=True)
         self.drive_right.off(brake=True)
 
     def drive_dist_update(self):
-        self.dist_left = self.drive_left.position * tire.circumference_mm / self.drive_left.count_per_rot
-        self.dist_right = self.drive_left.position * tire.circumference_mm / self.drive_right.count_per_rot
+        self.dist_left = self.drive_left.position * EV3_RIM / self.drive_left.count_per_rot
+        self.dist_right = self.drive_left.position * EV3_RIM / self.drive_right.count_per_rot
         return (self.dist_left + self.dist_right) / 2
 
     # DRIVE FUNCTIONS
@@ -102,13 +100,13 @@ class Drive:
             time.sleep(CYCLE_TIME)
         self.drive_stop()
 
-    def drive_ultrasonic (self, safe_dist):
-        while True:
-            self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT), self.ultrasonic_pid_update(safe_dist))
-            if self.ultrasonic <= safe_dist:
-                break
-            time.sleep(CYCLE_TIME)
-        self.drive_stop
+    # def drive_ultrasonic (self, safe_dist):
+    #     while True:
+    #         self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT), self.ultrasonic_pid_update(safe_dist))
+    #         if self.ultrasonic <= safe_dist:
+    #             break
+    #         time.sleep(CYCLE_TIME)
+    #     self.drive_stop
 
     # TURNING FUNCTIONS
 

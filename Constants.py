@@ -1,4 +1,6 @@
-#!./.venv/bin/python
+#!/usr/bin/env python3
+
+import math
 
 CYCLE_TIME = 0.05 # SECONDS
 
@@ -34,4 +36,6 @@ COLOR_RED = 2
 #Errors
 TURNING_ACC = 1 # +- DEG
 DIST_ACC = 5 # +- MM
+
+EV3_RIM = 43.2 * math.pi
 

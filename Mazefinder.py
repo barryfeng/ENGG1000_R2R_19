@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_3, INPUT_4
 from ev3dev2.sensor.lego import ColorSensor, GyroSensor, UltrasonicSensor
 from ev3dev2.led import Leds
@@ -9,34 +11,36 @@ from Constants import *
 from Drive import *
 from UltrasonicArm import *
 
-import datetime, time, threading
+import datetime, time
 
 # Start Robot Init
 sound = Sound()
 leds = Leds()
 btn = Button()
 
-start_time = time.time()
+# try:
+#     leftMotor = LargeMotor(OUTPUT_A)
+#     rightMotor = LargeMotor(OUTPUT_B)
+# #    ultrasound_arm = MediumMotor(OUTPUT_C)
+# #    color = ColorSensor(INPUT_2)
+#     gyroSensor = GyroSensor(INPUT_1)
+#     ultrasonicSensor = UltrasonicSensor(INPUT_2)
 
-try:
-    leftMotor = LargeMotor(OUTPUT_A)
-    rightMotor = LargeMotor(OUTPUT_B)
-#    ultrasound_arm = MediumMotor(OUTPUT_C)
-#    color = ColorSensor(INPUT_2)
-    gyroSensor = GyroSensor(INPUT_1)
-    ultrasonicSensor = UltrasonicSensor(INPUT_2)
+# except DeviceNotFound as connection_error:
+#     print(connection_error, file = sys.stderr)
 
-except DeviceNotFound as connection_error:
-    print(connection_error, file = sys.stderr)
+leftMotor = LargeMotor(OUTPUT_A)
+rightMotor = LargeMotor(OUTPUT_B)
+gyroSensor = GyroSensor(INPUT_1)
 
-drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor)
-#us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
+drive = Drive(leftMotor, rightMotor, gyroSensor)
+# us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
 
-def elapsed_time():
-    return int(time.time() - start_time)
+# def elapsed_time():
+#     return int(time.time() - start_time)
 
 def init_robot():
-    print(elapsed_time() + ': Initialising robot', file = sys.stderr)
+    print(': Initialising robot', file = sys.stderr)
     drive.gyro_calibrate()
     drive.drive_zero_position()
     #ultrasound_arm_calibrate()
@@ -50,8 +54,10 @@ def terrain():
 def spot_turn():
     drive.drive_spot_turn(Direction.LEFT)
     drive.drive_spot_turn(Direction.RIGHT)
+while True:
+    print('hello')
 
 if __name__ == '__main__':
     init_robot()
-    selection = input(elapsed_time() + ": Robot initialised", file = sys.stderr)
+    selection = input(": Robot initialised", file = sys.stderr)
     spot_turn()
