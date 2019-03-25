@@ -16,59 +16,36 @@ sound = Sound()
 leds = Leds()
 btn = Button()
 
-leftMotor = LargeMotor(OUTPUT_A)
-rightMotor = LargeMotor(OUTPUT_B)
-gyroSensor = GyroSensor(INPUT_1)
-ultrasonicSensor = UltrasonicSensor(INPUT_2)
-start_time = int(time.time())
+start_time = time.time()
 
-# try:
-#     leftMotor = LargeMotor(OUTPUT_A)
-#     rightMotor = LargeMotor(OUTPUT_B)
-#     #ultrasound_arm = MediumMotor(OUTPUT_C)
-#     gyroSensor = GyroSensor(INPUT_1)
-#     #color = ColorSensor(INPUT_2)
-#     #us_sensor = UltrasonicSensor(INPUT_3)
+try:
+    leftMotor = LargeMotor(OUTPUT_A)
+    rightMotor = LargeMotor(OUTPUT_B)
+#    ultrasound_arm = MediumMotor(OUTPUT_C)
+#    color = ColorSensor(INPUT_2)
+    gyroSensor = GyroSensor(INPUT_1)
+    ultrasonicSensor = UltrasonicSensor(INPUT_2)
 
-# except DeviceNotFound as connection_error:
-#     print(connection_error)
+except DeviceNotFound as connection_error:
+    print(connection_error, file = sys.stderr)
 
 drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor)
-
 #us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
 
+def elapsed_time():
+    return int(time.time() - start_time)
+
 def init_robot():
+    print(elapsed_time() + ': Initialising robot', file = sys.stderr)
     drive.gyro_calibrate()
     drive.drive_zero_position()
     #ultrasound_arm_calibrate()
 
-# def ultrasound_arm_calibrate():
-#     sound.speak('Move the arm to right hardstop. Calibrating arm in two seconds!')
-#     us_sensor.mode = 'US-DIST-CM'
-#     ultrasound_arm.stop_action = 'HOLD'
-#     time.sleep(2)
-#     ultrasound_arm.position = 0
-#     ultrasound_arm.on_to_position(100, 90, True)
-#     ultrasound_arm.position = 0
-#     sound.speak('Arm calibration complete.')
-
-# # Detect Target
-# def detect_target():
-#     gyro_zero()
-#     target_list = []
-#     ultrasound_arm.on_to_position(100, -90, True)
-#     ultrasound_arm.on_to_position(10, 90, True)
-#     if us.value() < 300:
-#         print("Object Found")
-#         target_list.append(ultrasound_arm.position)
-#     return target_list
-
-# Go to target
-# def rescue(target_angle):
-#   Drive.drive_start(update_gyro_pid(target_angle))
-
 def main():
     drive.drive_dist(300) #in mm
+
+def terrain():
+    drive.drive_indef()
 
 def spot_turn():
     drive.drive_spot_turn(Direction.LEFT)
@@ -76,6 +53,5 @@ def spot_turn():
 
 if __name__ == '__main__':
     init_robot()
-    selection = input("Robot initialised, type function to run to run program (Drive indefinitely [0], drive then turn [1])")
-    print("test msg stderr", file=sys.stderr)
+    selection = input(elapsed_time() + ": Robot initialised", file = sys.stderr)
     spot_turn()
