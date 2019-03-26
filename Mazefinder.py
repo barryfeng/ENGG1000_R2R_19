@@ -11,7 +11,7 @@ from Constants import *
 from Drive import *
 from UltrasonicArm import *
 
-import datetime, time
+import datetime, time, sys
 
 # Start Robot Init
 sound = Sound()
@@ -40,20 +40,22 @@ drive = Drive(leftMotor, rightMotor, gyroSensor)
 #     return int(time.time() - start_time)
 
 def init_robot():
+    print(EV3_RIM, file = sys.stderr)
     print(': Initialising robot', file = sys.stderr)
     drive.gyro_calibrate()
     drive.drive_zero_position()
     #ultrasound_arm_calibrate()
 
 def main():
-    drive.drive_dist(150) #in mm
+    drive.drive_indef()
+    # drive.drive_dist(150) #in mm
 
 def terrain():
     drive.drive_indef()
 
 def spot_turn():
-    drive.drive_spot_turn(Direction.LEFT)
-    drive.drive_spot_turn(Direction.RIGHT)
+    drive.drive_spot_turn(90)
+    drive.drive_spot_turn(-90)
 
 if __name__ == '__main__':
     init_robot()

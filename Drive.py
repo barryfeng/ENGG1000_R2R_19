@@ -50,8 +50,8 @@ class Drive:
         #print(compensate)
 
     def drive_turn_update(self, heading_compensate):
-        self.drive_left.on(DRIVE_SPEED - heading_compensate, brake= True)
-        self.drive_right.on(-DRIVE_SPEED + heading_compensate, brake=True)
+        self.drive_left.on(-heading_compensate, brake= True)
+        self.drive_right.on(heading_compensate, brake=True)
 
     def gyro_pid_update(self, setpoint):
         error = self.gyro.value() - setpoint
@@ -61,7 +61,13 @@ class Drive:
 
         self.gyro_last_error = error
         print('GYRO_PID: ' + str(heading_compensate), file=sys.stderr, flush = True)
-        return heading_compensate
+
+        if (50 <= heading_compensate):
+            return 50
+        elif (heading_compensate <= -50):
+            return -50
+        else:
+            return heading_compensate
 
     # def ultrasonic_pid_update(self, setpoint):
     #     error = self.ultrasonic.value() - setpoint
@@ -79,9 +85,9 @@ class Drive:
         self.drive_right.off(brake=True)
 
     def drive_dist_update(self):
-        self.dist_left = self.drive_left.position / self.drive_left.count_per_rot * EV3_RIM
-        self.dist_right = self.drive_left.position / self.drive_right.count_per_rot * EV3_RIM
-        return (self.dist_left + self.dist_right) / 2
+        self.dist_left = (self.drive_left.position * EV3_RIM)
+        self.dist_right = (self.drive_left.position * EV3_RIM)
+        return ((self.dist_left + self.dist_right) / 2)
 
     # DRIVE FUNCTIONS
         
