@@ -29,7 +29,7 @@ class Drive:
         self.drive_right.position_p = DRIVE_RIGHT_P
 
     def gyro_calibrate(self):
-        print('INIT: GYRO CALIBRATION', file = sys.stderr)
+        print('INIT: GYRO CALIBRATION', file = sys.stderr, flush = True)
         time.sleep(1)
         self.gyro_zero()
         time.sleep(2)
@@ -43,7 +43,7 @@ class Drive:
         self.drive_left.position = 0
         self.drive_right.position = 0
 
-    def drive_speed_update(self, heading_compensate):
+    def drive_speed_update(self, heading_compensate, dist_compensate = 0):
         self.drive_left.on(DRIVE_SPEED - heading_compensate, brake= True)
         self.drive_right.on(DRIVE_SPEED + heading_compensate, brake=True)
         self.drive_dist_update()
@@ -60,7 +60,7 @@ class Drive:
         heading_compensate = error * GYRO_P + self.gyro_integral * GYRO_I
 
         self.gyro_last_error = error
-        print(heading_compensate, file=sys.stderr)
+        print('GYRO_PID: ' + str(heading_compensate), file=sys.stderr, flush = True)
         return heading_compensate
 
     # def ultrasonic_pid_update(self, setpoint):
@@ -79,23 +79,24 @@ class Drive:
         self.drive_right.off(brake=True)
 
     def drive_dist_update(self):
-        self.dist_left = self.drive_left.position * EV3_RIM / self.drive_left.count_per_rot
-        self.dist_right = self.drive_left.position * EV3_RIM / self.drive_right.count_per_rot
+        self.dist_left = self.drive_left.position / self.drive_left.count_per_rot * EV3_RIM
+        self.dist_right = self.drive_left.position / self.drive_right.count_per_rot * EV3_RIM
         return (self.dist_left + self.dist_right) / 2
 
     # DRIVE FUNCTIONS
         
     def drive_indef(self):
         while True:
-            self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT))
+            self.drive_speed_update(self.gyro_pid_update(0))
             time.sleep(CYCLE_TIME)
 
     def drive_dist(self, desired_dist):
         self.drive_zero_position()
         while True:
-            self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT))
-            print(self.drive_dist_update + ' out of ' + desired_dist, file = sys.stderr)
-            if desired_dist - DIST_ACC <= self.drive_dist_update <= desired_dist + DIST_ACC:
+            self.drive_speed_update(self.gyro_pid_update(0))
+            print('POSITION: ' + str(self.drive_dist_update()) + ' / ' + str(desired_dist), file = sys.stderr, flush=True)
+            print('ROTATIONS: ' + str(self.drive_left.position / self.drive_left.count_per_rot), file = sys.stderr, flush = True)
+            if desired_dist - DIST_ACC <= int(self.drive_dist_update()) <= desired_dist + DIST_ACC:
                 break
             time.sleep(CYCLE_TIME)
         self.drive_stop()
@@ -125,14 +126,14 @@ class Drive:
         setpoint = current_dir + direction
         while True:
             self.drive_turn_update(self.gyro_pid_update(setpoint))
-            if setpoint - TURNING_ACC <= self.gyro.value() <= setpoint + TURNING_ACC:
+            if setpoint - TURNING_ACC <= int(self.gyro.value()) <= setpoint + TURNING_ACC:
                 break
             time.sleep(CYCLE_TIME)
         self.drive_stop()
 
     def drive_rescue_logged_turn(self):
         while True:
-            self.drive_turn_update(self.gyro_pid_update(Direction.START_DIR))
+            self.drive_turn_update(self.gyro_pid_update(Direction.STRAIGHT))
 
     # def basic_straight(self):
     #     self.drive_left.on_for_rotations(10)
@@ -147,8 +148,4 @@ class Direction(Enum):
     LEFT = -90
     RIGHT = 90
     STRAIGHT = 0
-
-    # Search directions
-    START_DIR = 90
-    END_DIR = -90 
 

@@ -46,7 +46,7 @@ def init_robot():
     #ultrasound_arm_calibrate()
 
 def main():
-    drive.drive_dist(300) #in mm
+    drive.drive_dist(150) #in mm
 
 def terrain():
     drive.drive_indef()
@@ -54,10 +54,7 @@ def terrain():
 def spot_turn():
     drive.drive_spot_turn(Direction.LEFT)
     drive.drive_spot_turn(Direction.RIGHT)
-while True:
-    print('hello')
 
 if __name__ == '__main__':
     init_robot()
-    selection = input(": Robot initialised", file = sys.stderr)
-    spot_turn()
+    main()

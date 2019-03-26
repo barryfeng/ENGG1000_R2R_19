@@ -2,7 +2,7 @@
 
 import math
 
-CYCLE_TIME = 0.05 # SECONDS
+CYCLE_TIME = 0.02 # SECONDS
 
 DRIVE_LEFT_P = 0
 DRIVE_LEFT_I = 0
@@ -37,5 +37,5 @@ COLOR_RED = 2
 TURNING_ACC = 1 # +- DEG
 DIST_ACC = 5 # +- MM
 
-EV3_RIM = 43.2 * math.pi
+EV3_RIM = 56 * math.pi
 
