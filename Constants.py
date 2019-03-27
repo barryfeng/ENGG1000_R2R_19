@@ -2,7 +2,7 @@
 
 import math
 
-CYCLE_TIME = 0.02 # SECONDS
+CYCLE_TIME = 0.1 # SECONDS
 
 DRIVE_LEFT_P = 0
 DRIVE_LEFT_I = 0
@@ -18,8 +18,8 @@ USARM_P = 1
 USARM_I = 1
 USARM_D = 1
 
-GYRO_P = 0.5
-GYRO_I = 0
+GYRO_P = 0.85
+GYRO_I = 0  
 
 US_P = 0.0
 US_I = 0
@@ -34,7 +34,7 @@ COLOR_BLUE = 1
 COLOR_RED = 2
 
 #Errors
-TURNING_ACC = 1 # +- DEG
+TURNING_ACC = 0.25 # +- DEG
 DIST_ACC = 5 # +- MM
 
 EV3_RIM = 56 * math.pi

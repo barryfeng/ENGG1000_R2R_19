@@ -1,7 +1,15 @@
+import time
+
 class Data:
-    def comparator(self, setpoint, lower_bound, upper_bound, value):
-        if setpoint - lower_bound <= value <= setpoint + upper_bound:
-            return True
-        else:
-            return False
-        
+   __instance = None
+   @staticmethod 
+   def getInstance():
+      """ Static access method. """
+      if Data.__instance == None:
+         Data()
+      return Data.__instance
+   def __init__(self):
+      if Data.__instance != None:
+         raise Exception("SINGLETON CLASS")
+      else:
+         Data.__instance = self
