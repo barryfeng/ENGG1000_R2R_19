@@ -60,7 +60,7 @@ class Drive:
         heading_compensate = error * GYRO_P + self.gyro_integral * GYRO_I
 
         self.gyro_last_error = error
-        print('GYRO_PID: ' + str(heading_compensate), file=sys.stderr, flush = True)
+        print('GYRO_PID: ' + self.graph_value(error), file=sys.stderr, flush = True)
 
         if (50 <= heading_compensate):
             return 50
@@ -68,7 +68,22 @@ class Drive:
             return -50
         else:
             return heading_compensate
+    def graph_value(self,val:int) -> str:
+        stringLen = 2*50
+        maxVal = 45
+        val = min(maxVal,val)
+        length = int(abs(stringLen//2 * val/maxVal))
+        if(val>0):
+            out = " " * (stringLen//2 - length) + "-" * length + "|" + " " * (stringLen//2)
+        elif(val<0):
+            out = " " * (stringLen//2) + "|" + "-" * length + " " * (stringLen//2 - length)
+        else:
+            out = " " * (stringLen//2) + "|" + " " * (stringLen//2)
+        return out + "(" + str(val) + ")"
+        
+        
 
+        
     # def ultrasonic_pid_update(self, setpoint):
     #     error = self.ultrasonic.value() - setpoint
     #     self.ultrasonic_integral += (error * CYCLE_TIME)
@@ -136,6 +151,7 @@ class Drive:
                 break
             time.sleep(CYCLE_TIME)
         self.drive_stop()
+
 
     def drive_rescue_logged_turn(self):
         while True:
