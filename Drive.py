@@ -7,7 +7,7 @@ from enum import Enum
 from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor
 from ev3dev2.motor import MoveTank
 
-import time, sys, syslog
+import time, sys, syslog, csv
 
 data = Data()
 
@@ -31,6 +31,8 @@ class Drive:
 
         self.drive_left.position_p = DRIVE_LEFT_P
         self.drive_right.position_p = DRIVE_RIGHT_P
+
+        self.logged_gyro = [[0,0]]
 
     def elapsed_time(self):
         return str(time.time() - self.start_time)
@@ -74,6 +76,7 @@ class Drive:
 
         self.gyro_last_error = error
         print(self.elapsed_time() + ' GYRO_PID: ' + str(error), file=sys.stderr, flush = True)
+        self.logged_gyro.append([int(self.elapsed_time()), int(error)])
 
         if (50 <= heading_compensate):
             return 49.9
@@ -166,6 +169,13 @@ class Drive:
     # def basic_turn_left(self):
     #     self.drive_left.stop()
     #     self.drive_right.on_for_degrees(360)
+
+    def create_gyro_csv(self):
+        csv.register_dialect('dialect', delimiter=',', quoting=csv.QUOTE_NONE)
+        gyro_file = open('gyro_error.csv', 'w')  
+        with gyro_file:  
+            writer = csv.writer(gyro_file, dialect='dialect')
+            writer.writerows(self.logged_gyro)
 
 class Direction(Enum):
     # Turning directions

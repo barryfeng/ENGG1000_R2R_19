@@ -16,7 +16,7 @@ from Drive import *
 from UltrasonicArm import *
 from Data import *
 
-import datetime, time, sys
+import datetime, time, sys, csv
 
 start_time = time.time()
 
@@ -72,6 +72,7 @@ def spot_turn():
 if __name__ == '__main__':
     init_robot()
     main()
+    drive.create_gyro_csv()
 
 # MQTT PID TUNING
 # This is the Subscriber
