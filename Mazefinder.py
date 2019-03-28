@@ -60,25 +60,14 @@ def init_robot():
     #ultrasound_arm_calibrate()
 
 def main():
-<<<<<<< HEAD
     # drive.drive_dist(100) #in mm
     spot_turn()
-=======
-    spot_turn()
-    #drive.drive_indef()
-    # drive.drive_dist(150) #in mm
->>>>>>> cb02dd917ad98d9bbe37a5d5f757c9209b9e4aa4
 
 def terrain():
     drive.drive_indef()
 
 def spot_turn():
-<<<<<<< HEAD
     drive.drive_spot_turn(90)
-=======
-    while(True):    
-        drive.drive_turn_update(drive.gyro_pid_update(90))
->>>>>>> cb02dd917ad98d9bbe37a5d5f757c9209b9e4aa4
 
 if __name__ == '__main__':
     init_robot()

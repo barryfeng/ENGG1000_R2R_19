@@ -18,14 +18,8 @@ USARM_P = 1
 USARM_I = 1
 USARM_D = 1
 
-<<<<<<< HEAD
 GYRO_P = 0.85
 GYRO_I = 0  
-=======
-GYRO_P = 3
-GYRO_I = 0
-GYRO_D = 0
->>>>>>> cb02dd917ad98d9bbe37a5d5f757c9209b9e4aa4
 
 US_P = 0.0
 US_I = 0
