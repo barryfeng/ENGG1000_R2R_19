@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Curves</key>
+	<array/>
+	<key>Datasources</key>
+	<array>
+		<dict>
+			<key>PluginIdentifier</key>
+			<string>com.lsdview.textfile</string>
+			<key>Settings</key>
+			<dict>
+				<key>DelimiterType</key>
+				<integer>1</integer>
+				<key>EveryNthLine</key>
+				<integer>2</integer>
+				<key>ExtractColumnNames</key>
+				<false/>
+				<key>Filename</key>
+				<string>/Users/barryfeng/Documents/GitHub/ENGG1000_R2R_19/PIDLOG/gyro_error.csv</string>
+				<key>Skiplines</key>
+				<integer>2</integer>
+			</dict>
+		</dict>
+	</array>
+	<key>DatasourcesMap</key>
+	<array/>
+	<key>PlotAreaOptions</key>
+	<dict>
+		<key>axisTitleX</key>
+		<string></string>
+		<key>axisTitleY</key>
+		<string></string>
+		<key>axisX_type</key>
+		<string>numeric</string>
+		<key>axisY_type</key>
+		<string>numeric</string>
+		<key>legendAlignment</key>
+		<integer>0</integer>
+		<key>legendMargins</key>
+		<array>
+			<real>0.0</real>
+			<real>0.0</real>
+		</array>
+		<key>showHorizontalLines</key>
+		<true/>
+		<key>showLegend</key>
+		<false/>
+		<key>showOriginX</key>
+		<true/>
+		<key>showOriginY</key>
+		<true/>
+		<key>showVerticalLines</key>
+		<true/>
+		<key>title</key>
+		<string></string>
+	</dict>
+	<key>StyleId</key>
+	<string>standard-white.json</string>
+</dict>
+</plist>

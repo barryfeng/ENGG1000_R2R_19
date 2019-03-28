@@ -47,8 +47,10 @@ btn = Button()
 leftMotor = LargeMotor(OUTPUT_A)
 rightMotor = LargeMotor(OUTPUT_B)
 gyroSensor = GyroSensor(INPUT_1)
+ultrasonicSensor = UltrasonicSensor(INPUT_2)
 
-drive = Drive(leftMotor, rightMotor, gyroSensor, start_time)
+
+drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor , start_time)
 # us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
 
 def elapsed_time():
@@ -60,8 +62,13 @@ def init_robot():
     #ultrasound_arm_calibrate()
 
 def main():
-    # drive.drive_dist(100) #in mm
-    spot_turn()
+    drive.drive_ultrasonic(170)
+    drive.drive_spot_turn(90)
+    drive.gyro_calibrate()
+    drive.drive_ultrasonic(170)
+    # while True:
+    #     print(drive.drive_right.position, file = sys.stderr)
+    #     time.sleep(0.5)
 
 def terrain():
     drive.drive_indef()

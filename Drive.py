@@ -12,10 +12,11 @@ import time, sys, syslog, csv
 data = Data()
 
 class Drive:
-    def __init__(self, drive_left, drive_right, gyro, start_time):
+    def __init__(self, drive_left, drive_right, gyro, ultrasonic, start_time):
         self.drive_left = drive_left
         self.drive_right = drive_right
         self.gyro = gyro
+        self.ultrasonic = ultrasonic
         self.start_time = start_time
 
         self.dist_left = 0
@@ -34,6 +35,8 @@ class Drive:
 
         self.logged_gyro = [[0,0]]
 
+        self.gyro_setpoint = 0
+
     def elapsed_time(self):
         return str(time.time() - self.start_time)
 
@@ -45,10 +48,12 @@ class Drive:
         print('END: GYRO CALIBRATION', file = sys.stderr, flush = True)
 
     def gyro_zero(self):
-        self.gyro.mode = 'GYRO-CAL'
+        self.gyro.mode = 'GYRO-RATE'
         self.gyro.mode = 'GYRO-ANG'
 
     def drive_init(self):
+        self.drive_left.polarity = self.drive_left.POLARITY_INVERSED
+        self.drive_right.polarity = self.drive_right.POLARITY_INVERSED
         self.drive_zero_position()
         self.gyro_calibrate()
         self.drive_left.stop_action = self.drive_left.STOP_ACTION_HOLD
@@ -59,14 +64,14 @@ class Drive:
         self.drive_right.position = 0
 
     def drive_speed_update(self, heading_compensate, dist_compensate = 0):
-        self.drive_left.on(DRIVE_SPEED - heading_compensate, brake= True)
-        self.drive_right.on(DRIVE_SPEED + heading_compensate, brake=True)
+        self.drive_left.on(DRIVE_SPEED + heading_compensate, brake= True)
+        self.drive_right.on(DRIVE_SPEED - heading_compensate, brake=True)
         self.drive_dist_update()
         #print(compensate)
 
     def drive_turn_update(self, heading_compensate):
-        self.drive_left.on(-heading_compensate, brake= True)
-        self.drive_right.on(heading_compensate, brake=True)
+        self.drive_left.on(heading_compensate, brake= True)
+        self.drive_right.on(-heading_compensate, brake=True)
 
     def gyro_pid_update(self, setpoint):
         error = self.gyro.value() - setpoint
@@ -76,7 +81,7 @@ class Drive:
 
         self.gyro_last_error = error
         print(self.elapsed_time() + ' GYRO_PID: ' + str(error), file=sys.stderr, flush = True)
-        self.logged_gyro.append([int(self.elapsed_time()), int(error)])
+        self.logged_gyro.append([self.elapsed_time(), int(error)])
 
         if (50 <= heading_compensate):
             return 49.9
@@ -85,16 +90,16 @@ class Drive:
         else:
             return heading_compensate
         
-    # def ultrasonic_pid_update(self, setpoint):
-    #     error = self.ultrasonic.value() - setpoint
-    #     self.ultrasonic_integral += (error * CYCLE_TIME)
-    #     derivative = (error - self.ultrasonic_last_error) / CYCLE_TIME
+    def ultrasonic_pid_update(self, setpoint):
+        error = self.ultrasonic.value() - setpoint
+        self.ultrasonic_integral += (error * CYCLE_TIME)
+        derivative = (error - self.ultrasonic_last_error) / CYCLE_TIME
 
-    #     dist_compensate = error * US_P + self.ultrasonic_integral * US_I + derivative * US_D
+        dist_compensate = error * US_P + self.ultrasonic_integral * US_I + derivative * US_D
 
-    #     self.ultrasonic_last_error = error
-    #     print(dist_compensate, file=sys.stderr)
-    #     return dist_compensate
+        self.ultrasonic_last_error = error
+        print(dist_compensate, file=sys.stderr)
+        return dist_compensate
 
     def drive_stop(self):
         self.drive_left.stop()
@@ -121,17 +126,18 @@ class Drive:
             print('ROTATIONS: ' + str(self.drive_left.position / self.drive_left.count_per_rot), file = sys.stderr, flush = True)
             print()
             if desired_dist - DIST_ACC <= self.dist_travelled:
+                self.drive_stop()
                 break
             time.sleep(CYCLE_TIME)
-        self.drive_stop()
 
-    # def drive_ultrasonic (self, safe_dist):
-    #     while True:
-    #         self.drive_speed_update(self.gyro_pid_update(Direction.STRAIGHT), self.ultrasonic_pid_update(safe_dist))
-    #         if self.ultrasonic <= safe_dist:
-    #             break
-    #         time.sleep(CYCLE_TIME)
-    #     self.drive_stop
+    def drive_ultrasonic(self, safe_dist):
+        while True:
+            self.drive_speed_update(self.gyro_pid_update(0), self.ultrasonic_pid_update(safe_dist))
+            print(self.ultrasonic.value(), file = sys.stderr)
+            if self.ultrasonic.value() <= safe_dist + DIST_ULTRA_OFFSET:
+                self.drive_stop
+                break
+            time.sleep(CYCLE_TIME)
 
     # TURNING FUNCTIONS
 
