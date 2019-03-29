@@ -3,7 +3,33 @@
 <plist version="1.0">
 <dict>
 	<key>Curves</key>
-	<array/>
+	<array>
+		<dict>
+			<key>Color</key>
+			<array>
+				<real>0.0</real>
+				<real>0.0</real>
+				<real>0.95693510770797729</real>
+				<real>1</real>
+			</array>
+			<key>ColorAlpha</key>
+			<real>1</real>
+			<key>LineType</key>
+			<integer>4</integer>
+			<key>TicksShape</key>
+			<integer>4</integer>
+			<key>TicksSize</key>
+			<integer>3</integer>
+			<key>Title</key>
+			<string></string>
+			<key>Visible</key>
+			<true/>
+			<key>X_data_index</key>
+			<integer>1</integer>
+			<key>Y_data_index</key>
+			<integer>2</integer>
+		</dict>
+	</array>
 	<key>Datasources</key>
 	<array>
 		<dict>
@@ -25,7 +51,9 @@
 		</dict>
 	</array>
 	<key>DatasourcesMap</key>
-	<array/>
+	<array>
+		<integer>0</integer>
+	</array>
 	<key>PlotAreaOptions</key>
 	<dict>
 		<key>axisTitleX</key>

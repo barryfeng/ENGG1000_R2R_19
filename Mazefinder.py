@@ -15,6 +15,7 @@ from Constants import *
 from Drive import *
 from UltrasonicArm import *
 from Data import *
+from MazeAlgorithm import *
 
 import datetime, time, sys, csv
 
@@ -49,8 +50,9 @@ rightMotor = LargeMotor(OUTPUT_B)
 gyroSensor = GyroSensor(INPUT_1)
 ultrasonicSensor = UltrasonicSensor(INPUT_2)
 
-
 drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor , start_time)
+mazealg = MazeAlgorithm()
+
 # us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
 
 def elapsed_time():
@@ -62,13 +64,8 @@ def init_robot():
     #ultrasound_arm_calibrate()
 
 def main():
-    drive.drive_ultrasonic(170)
-    drive.drive_spot_turn(90)
-    drive.gyro_calibrate()
-    drive.drive_ultrasonic(170)
-    # while True:
-    #     print(drive.drive_right.position, file = sys.stderr)
-    #     time.sleep(0.5)
+    # maze()
+    drive.drive_dist(200)
 
 def terrain():
     drive.drive_indef()
@@ -76,10 +73,24 @@ def terrain():
 def spot_turn():
     drive.drive_spot_turn(90)
 
+def maze():
+    # drive.drive_ultrasonic(US_SAFE_DIST)
+    # drive.drive_spot_turn(90)
+    # drive.drive_ultrasonic(US_SAFE_DIST)
+    # drive.drive_spot_turn(90)
+    # drive.drive_ultrasonic(US_SAFE_DIST)
+    while True:
+        if ultrasonicSensor.value() > US_SAFE_DIST:
+            drive.drive_ultrasonic(US_SAFE_DIST)
+        else:
+            drive.drive_spot_turn(90) #find direction using MazeAlgorithm class
+#mazealg.determine_case(100)
 if __name__ == '__main__':
     init_robot()
     main()
     drive.create_gyro_csv()
+    drive.create_position_csv()
+
 
 # MQTT PID TUNING
 # This is the Subscriber

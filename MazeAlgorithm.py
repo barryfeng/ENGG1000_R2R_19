@@ -10,6 +10,9 @@ class MazeAlgorithm:
 
     def case_four_junction(self):
         print("welp.")
+    
+    def dead_end(self):
+        print("welp")
 
     def determine_case(self, dist):
         if 200 <= dist:

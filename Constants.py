@@ -18,7 +18,7 @@ USARM_P = 1
 USARM_I = 1
 USARM_D = 1
 
-GYRO_P = 0.85
+GYRO_P = 0.65
 GYRO_I = 0  
 
 US_P = 0.0
@@ -38,5 +38,7 @@ TURNING_ACC = 0.25 # +- DEG
 DIST_ACC = 5 # +- MM
 
 EV3_RIM = 56 * math.pi
+
+US_SAFE_DIST = 170
 
 DIST_ULTRA_OFFSET = 0
