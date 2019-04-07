@@ -8,8 +8,7 @@ from ev3dev2 import DeviceNotFound
 from ev3dev2.motor import LargeMotor, MediumMotor, OUTPUT_A, OUTPUT_B, OUTPUT_C, OUTPUT_D, SpeedRPS
 from ev3dev2.button import Button
 
-# import paho.mqtt.client as mqtt
-# from ev3dev2.auto import *
+from threading import Thread
 
 from Constants import *
 from Drive import *
@@ -20,19 +19,13 @@ from MazeAlgorithm import *
 import datetime, time, sys, csv
 
 start_time = time.time()
+data = Data()
 
 # Start Robot Init
 sound = Sound()
 leds = Leds()
 btn = Button()
 
-# client = mqtt.Client()
-# client.connect("172.20.10.2",1883,60)
-
-# client.on_connect = on_connect
-# client.on_message = on_message
-
-# client.loop_forever()
 
 # try:
 #     leftMotor = LargeMotor(OUTPUT_A)
@@ -47,13 +40,15 @@ btn = Button()
 
 leftMotor = LargeMotor(OUTPUT_A)
 rightMotor = LargeMotor(OUTPUT_B)
+ultrasonicMotor = MediumMotor(OUTPUT_C)
 gyroSensor = GyroSensor(INPUT_1)
 ultrasonicSensor = UltrasonicSensor(INPUT_2)
 
 drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor , start_time)
-mazealg = MazeAlgorithm()
+us_arm = UltrasonicArm(ultrasonicMotor, gyroSensor, ultrasonicSensor)
 
-# us_arm = UltrasonicArm(ultrasound_arm, us_sensor)
+# us_thread = Thread(target=us_arm.us_maze_detect())
+mazealg = MazeAlgorithm()
 
 def elapsed_time():
     return str(time.time() - start_time)
@@ -61,47 +56,34 @@ def elapsed_time():
 def init_robot():
     print(elapsed_time() + ': INIT ROBOT', file = sys.stderr, flush = True)
     drive.drive_init()
-    #ultrasound_arm_calibrate()
+    # us_thread.setDaemon(True)
+    # us_thread.start()
 
-def main():
-    # maze()
-    drive.drive_dist(200)
+def main():    
+    # complianceTurn()
+    # complianceDrive()
+    maze()
 
 def terrain():
     drive.drive_indef()
 
-def spot_turn():
-    drive.drive_spot_turn(90)
+def complianceTurn():
+    drive.drive_spot_turn(data.gyroSetpoint(-90))
+    drive.drive_spot_turn(data.gyroSetpoint(90))
+
+def complianceDrive():
+    drive.drive_dist(data.distSetpoint(600))
 
 def maze():
-    # drive.drive_ultrasonic(US_SAFE_DIST)
-    # drive.drive_spot_turn(90)
-    # drive.drive_ultrasonic(US_SAFE_DIST)
-    # drive.drive_spot_turn(90)
-    # drive.drive_ultrasonic(US_SAFE_DIST)
     while True:
         if ultrasonicSensor.value() > US_SAFE_DIST:
             drive.drive_ultrasonic(US_SAFE_DIST)
         else:
-            drive.drive_spot_turn(90) #find direction using MazeAlgorithm class
-#mazealg.determine_case(100)
+            valueSet = us_arm.us_maze_detect()
+            drive.cycle_search(valueSet)
+            
 if __name__ == '__main__':
     init_robot()
     main()
     drive.create_gyro_csv()
-    drive.create_position_csv()
-
-
-# MQTT PID TUNING
-# This is the Subscriber
-
-# def on_connect(client, userdata, flags, rc):
-#     print("CONNECTED, RC: "+str(rc))
-#     client.subscribe("topic/gyro_p")
-
-# def on_message(client, userdata, msg):
-#     if (msg.payload == 'Q'):
-#       client.disconnect()
-#     elif (0 <= int(msg.payload) <= 10):
-#       temp_tuning_GYRO_P = msg.payload
-#       print(temp_tuning_GYRO_P, file = sys.stderr, flush = True)
+    # drive.create_position_csv()
