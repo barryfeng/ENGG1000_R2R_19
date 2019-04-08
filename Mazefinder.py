@@ -27,22 +27,15 @@ leds = Leds()
 btn = Button()
 
 
-# try:
-#     leftMotor = LargeMotor(OUTPUT_A)
-#     rightMotor = LargeMotor(OUTPUT_B)
-# #    ultrasound_arm = MediumMotor(OUTPUT_C)
-# #    color = ColorSensor(INPUT_2)
-#     gyroSensor = GyroSensor(INPUT_1)
-#     ultrasonicSensor = UltrasonicSensor(INPUT_2)
+try:
+    leftMotor = LargeMotor(OUTPUT_A)
+    rightMotor = LargeMotor(OUTPUT_B)
+    ultrasonicMotor = MediumMotor(OUTPUT_C)
+    gyroSensor = GyroSensor(INPUT_1)
+    ultrasonicSensor = UltrasonicSensor(INPUT_2)
 
-# except DeviceNotFound as connection_error:
-#     print(connection_error, file = sys.stderr)
-
-leftMotor = LargeMotor(OUTPUT_A)
-rightMotor = LargeMotor(OUTPUT_B)
-ultrasonicMotor = MediumMotor(OUTPUT_C)
-gyroSensor = GyroSensor(INPUT_1)
-ultrasonicSensor = UltrasonicSensor(INPUT_2)
+except DeviceNotFound as connection_error:
+    print(connection_error, file = sys.stderr)
 
 drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor , start_time)
 us_arm = UltrasonicArm(ultrasonicMotor, gyroSensor, ultrasonicSensor)
@@ -60,12 +53,21 @@ def init_robot():
     # us_thread.start()
 
 def main():    
-    # complianceTurn()
-    # complianceDrive()
-    maze()
+    complianceTest()
+    # maze()
 
 def terrain():
     drive.drive_indef()
+
+def complianceTest():
+    print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
+    complianceTurn()
+    print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
+    btn.wait_for_bump(btn.enter, 500)
+    time.sleep(2)
+    print("INIT: COMPLIANCE DRIVE READY", file = sys.stderr)
+    complianceDrive()
+    print("INIT: COMPLIANCE DRIVE COMPLETE", file = sys.stderr)
 
 def complianceTurn():
     drive.drive_spot_turn(data.gyroSetpoint(-90))
@@ -81,7 +83,7 @@ def maze():
         else:
             valueSet = us_arm.us_maze_detect()
             drive.cycle_search(valueSet)
-            
+
 if __name__ == '__main__':
     init_robot()
     main()

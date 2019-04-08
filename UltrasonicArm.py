@@ -34,7 +34,6 @@ class UltrasonicArm:
         time.sleep(0.1)
         self.arm_motor.on_for_degrees(100,90)
         self.arm_motor.stop()
-        print(valueSet,file=sys.stderr)
         return valueSet
 
     # # Detect Target

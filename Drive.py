@@ -52,8 +52,14 @@ class Drive:
         time.sleep(1)
 
     def drive_init(self):
-        self.drive_left.polarity = self.drive_left.POLARITY_INVERSED
-        self.drive_right.polarity = self.drive_right.POLARITY_INVERSED
+        if K_DRIVING_DIRECTION == 1:
+            self.drive_left.polarity = self.drive_left.POLARITY_INVERSED
+            self.drive_right.polarity = self.drive_right.POLARITY_INVERSED
+        elif K_DRIVING_DIRECTION == -1:
+            self.drive_left.polarity = self.drive_left.POLARITY_NORMAL
+            self.drive_right.polarity = self.drive_right.POLARITY_NORMAL
+        else:
+            print("ERROR: INVALID DRIVING DIRECTION", file = sys.stderr)
         self.drive_zero_position()
         self.drive_left.stop_action = self.drive_left.STOP_ACTION_HOLD
         self.drive_right.stop_action = self.drive_right.STOP_ACTION_HOLD
@@ -65,14 +71,14 @@ class Drive:
 
     def drive_speed_update(self, heading_compensate):
         self.drive_cycle_start = time.time()
-        self.drive_left.on(DRIVE_SPEED - heading_compensate, brake= True)
-        self.drive_right.on(DRIVE_SPEED + heading_compensate, brake=True)
+        self.drive_left.on(DRIVE_SPEED - K_DRIVING_DIRECTION * heading_compensate, brake= True)
+        self.drive_right.on(DRIVE_SPEED + K_DRIVING_DIRECTION * heading_compensate, brake=True)
         self.drive_dist_update()
         self.drive_cycle_end = time.time()
 
     def drive_turn_update(self, heading_compensate):
-        self.drive_left.on(K_TURNING_SPEED*-heading_compensate, brake= True)
-        self.drive_right.on(K_TURNING_SPEED*heading_compensate, brake=True)
+        self.drive_left.on(K_DRIVING_DIRECTION * K_TURNING_SPEED * - heading_compensate, brake= True)
+        self.drive_right.on(K_DRIVING_DIRECTION * K_TURNING_SPEED * heading_compensate, brake=True)
 
     def gyro_pid_update(self, setpoint):
         error = self.gyro.value() - setpoint
@@ -130,15 +136,15 @@ class Drive:
 
     # TURNING FUNCTIONS
 
-    def drive_slow_turn(self, direction):
-        current_dir = self.gyro.value()
-        setpoint = current_dir + direction        
-        while True:
-            self.drive_speed_update(self.gyro_pid_update(direction))
-            if setpoint - TURNING_ACC < self.gyro.value() < setpoint + TURNING_ACC:
-                break
-            time.sleep(CYCLE_TIME)
-        self.drive_stop()
+    # def drive_slow_turn(self, direction):
+    #     current_dir = self.gyro.value()
+    #     setpoint = current_dir + direction        
+    #     while True:
+    #         self.drive_speed_update(self.gyro_pid_update(direction))
+    #         if setpoint - TURNING_ACC < self.gyro.value() < setpoint + TURNING_ACC:
+    #             break
+    #         time.sleep(CYCLE_TIME)
+    #     self.drive_stop()
 
     def drive_spot_turn(self, setpoint):
         while True:
@@ -154,16 +160,16 @@ class Drive:
         left = valueSet[0]
         right = valueSet[1]
         if left <= K_WALL_SAFE_DIST and right <= K_WALL_SAFE_DIST:
-            print("ACTION: DEAD END", file = sys.stderr)
+            print("ACTION: DEAD END " + valueSet, file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(180))
         elif K_WALL_SAFE_DIST <= left and right <= K_WALL_SAFE_DIST:
-            print("ACTION: CORNER ON LEFT", file = sys.stderr)
+            print("ACTION: CORNER ON LEFT " + valueSet, file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(90))
         elif K_WALL_SAFE_DIST <= right and left <= K_WALL_SAFE_DIST:
-            print("ACTION: CORNER ON RIGHT", file = sys.stderr)
+            print("ACTION: CORNER ON RIGHT " + valueSet, file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(-90))
         elif K_WALL_SAFE_DIST <= left and K_WALL_SAFE_DIST <= right:
-            print("ACTION: TEE JUNCTION", file = sys.stderr)
+            print("ACTION: TEE JUNCTION " + valueSet, file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(90))
 
     def drive_rescue_logged_turn(self):
@@ -178,15 +184,6 @@ class Drive:
         with gyro_file:  
             writer = csv.writer(gyro_file, dialect='dialect')
             writer.writerows(self.logged_gyro)
-            # for row in csv.reader(gyro_file, delimiter=','):
-            #     time.append(int(row[0]))
-            #     error.append(int(row[1]))
-        # plt.plot(time,error, label='Gyro Error/Time Graph')
-        # plt.xlabel('Time (s)')
-        # plt.ylabel('Error (deg)')
-        # plt.title('Gyro Error/Time Graph')
-        # plt.legend()
-        # plt.show()
 
     # def create_position_csv(self):
     #     csv.register_dialect('dialect', delimiter=',', quoting=csv.QUOTE_NONE)
