@@ -21,9 +21,9 @@ COLOR_RED = 2
 TURNING_ACC = 0.5 # +- DEG
 DIST_ACC = 5 # +- MM
 
-EV3_RIM = 56 * math.pi
+EV3_RIM = 60 * math.pi
 
-US_SAFE_DIST = 300
+US_SAFE_DIST = 250
 
 K_WALL_SAFE_DIST = 300
 

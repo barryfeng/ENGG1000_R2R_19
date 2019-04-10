@@ -8,4 +8,4 @@ class Data:
       return (setpoint + setpoint*0.02)
 
    def distSetpoint(self, setpoint):
-      return (setpoint - setpoint*0.05)
+      return (setpoint - setpoint*0.00)

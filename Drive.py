@@ -47,7 +47,7 @@ class Drive:
 
     def gyro_zero(self):
         time.sleep(1)
-        self.gyro.mode = 'GYRO-RATE'
+        self.gyro.mode = 'GYRO-CAL'
         self.gyro.mode = 'GYRO-ANG'
         time.sleep(1)
 
@@ -160,16 +160,16 @@ class Drive:
         left = valueSet[0]
         right = valueSet[1]
         if left <= K_WALL_SAFE_DIST and right <= K_WALL_SAFE_DIST:
-            print("ACTION: DEAD END " + valueSet, file = sys.stderr)
+            print("ACTION: DEAD END ", file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(180))
         elif K_WALL_SAFE_DIST <= left and right <= K_WALL_SAFE_DIST:
-            print("ACTION: CORNER ON LEFT " + valueSet, file = sys.stderr)
+            print("ACTION: CORNER ON LEFT ", file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(90))
         elif K_WALL_SAFE_DIST <= right and left <= K_WALL_SAFE_DIST:
-            print("ACTION: CORNER ON RIGHT " + valueSet, file = sys.stderr)
+            print("ACTION: CORNER ON RIGHT ", file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(-90))
         elif K_WALL_SAFE_DIST <= left and K_WALL_SAFE_DIST <= right:
-            print("ACTION: TEE JUNCTION " + valueSet, file = sys.stderr)
+            print("ACTION: TEE JUNCTION ", file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(90))
 
     def drive_rescue_logged_turn(self):

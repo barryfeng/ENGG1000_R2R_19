@@ -55,6 +55,7 @@ def init_robot():
 def main():    
     complianceTest()
     # maze()
+    # drive.drive_indef()
 
 def terrain():
     drive.drive_indef()
@@ -63,7 +64,6 @@ def complianceTest():
     print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
     complianceTurn()
     print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
-    btn.wait_for_bump(btn.enter, 500)
     time.sleep(2)
     print("INIT: COMPLIANCE DRIVE READY", file = sys.stderr)
     complianceDrive()
@@ -74,7 +74,7 @@ def complianceTurn():
     drive.drive_spot_turn(data.gyroSetpoint(90))
 
 def complianceDrive():
-    drive.drive_dist(data.distSetpoint(600))
+    drive.drive_dist(data.distSetpoint(750))
 
 def maze():
     while True:
