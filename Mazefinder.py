@@ -64,14 +64,13 @@ def complianceTest():
     print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
     complianceTurn()
     print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
-    time.sleep(2)
-    print("INIT: COMPLIANCE DRIVE READY", file = sys.stderr)
-    complianceDrive()
-    print("INIT: COMPLIANCE DRIVE COMPLETE", file = sys.stderr)
+    # print("INIT: COMPLIANCE DRIVE READY", file = sys.stderr)
+    # complianceDrive()
+    # print("INIT: COMPLIANCE DRIVE COMPLETE", file = sys.stderr)
 
 def complianceTurn():
     drive.drive_spot_turn(data.gyroSetpoint(-90))
-    drive.drive_spot_turn(data.gyroSetpoint(90))
+    # drive.drive_spot_turn(data.gyroSetpoint(90))
 
 def complianceDrive():
     drive.drive_dist(data.distSetpoint(750))
