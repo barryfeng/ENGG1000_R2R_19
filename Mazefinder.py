@@ -62,7 +62,8 @@ def terrain():
 
 def complianceTest():
     print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
-    complianceTurn()
+    # complianceTurn()
+    complianceDrive()
     print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
     # print("INIT: COMPLIANCE DRIVE READY", file = sys.stderr)
     # complianceDrive()
@@ -73,7 +74,7 @@ def complianceTurn():
     # drive.drive_spot_turn(data.gyroSetpoint(90))
 
 def complianceDrive():
-    drive.drive_dist(data.distSetpoint(750))
+    drive.drive_dist(data.distSetpoint(1200))
 
 def maze():
     while True:
