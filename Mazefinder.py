@@ -8,8 +8,6 @@ from ev3dev2 import DeviceNotFound
 from ev3dev2.motor import LargeMotor, MediumMotor, OUTPUT_A, OUTPUT_B, OUTPUT_C, OUTPUT_D, SpeedRPS
 from ev3dev2.button import Button
 
-from threading import Thread
-
 from Constants import *
 from Drive import *
 from UltrasonicArm import *
@@ -20,12 +18,6 @@ import datetime, time, sys, csv
 
 start_time = time.time()
 data = Data()
-
-# Start Robot Init
-sound = Sound()
-leds = Leds()
-btn = Button()
-
 
 try:
     leftMotor = LargeMotor(OUTPUT_A)
@@ -40,7 +32,6 @@ except DeviceNotFound as connection_error:
 drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor , start_time)
 us_arm = UltrasonicArm(ultrasonicMotor, gyroSensor, ultrasonicSensor)
 
-# us_thread = Thread(target=us_arm.us_maze_detect())
 mazealg = MazeAlgorithm()
 
 def elapsed_time():
@@ -49,29 +40,25 @@ def elapsed_time():
 def init_robot():
     print(elapsed_time() + ': INIT ROBOT', file = sys.stderr, flush = True)
     drive.drive_init()
-    # us_thread.setDaemon(True)
-    # us_thread.start()
 
-def main():    
-    complianceTest()
+def main():
     # maze()
-    # drive.drive_indef()
+    terrain()
 
 def terrain():
     drive.drive_indef()
 
+def obstacles():
+    drive.drive_indef()
+
 def complianceTest():
     print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
-    # complianceTurn()
+    complianceTurn()
     complianceDrive()
     print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
-    # print("INIT: COMPLIANCE DRIVE READY", file = sys.stderr)
-    # complianceDrive()
-    # print("INIT: COMPLIANCE DRIVE COMPLETE", file = sys.stderr)
 
 def complianceTurn():
     drive.drive_spot_turn(data.gyroSetpoint(-90))
-    # drive.drive_spot_turn(data.gyroSetpoint(90))
 
 def complianceDrive():
     drive.drive_dist(data.distSetpoint(1200))

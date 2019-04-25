@@ -24,7 +24,7 @@ class UltrasonicArm:
         while i < 200:
             target_dict[self.gyro.value()] = self.ultrasonic.value()
             i += 1
-            time.sleep(CYCLE_TIME)
+            time.sleep(K_CYCLE_TIME)
         print(target_dict, file = sys.stderr)
 
     def us_maze_detect(self):
@@ -48,7 +48,8 @@ class UltrasonicArm:
         valueSet.append(self.ultrasonic.value())
         self.arm_motor.run_to_abs_pos(0)
         return valueSet
-
+        
+ 
     # # Detect Target
     # def detect_target(self):
     #     gyro_zero()

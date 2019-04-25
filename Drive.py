@@ -7,6 +7,7 @@ from enum import Enum
 
 from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor
 from ev3dev2.motor import MoveTank
+from threading import Thread
 
 import time, sys, syslog, csv
 
@@ -71,8 +72,8 @@ class Drive:
 
     def drive_speed_update(self, heading_compensate):
         self.drive_cycle_start = time.time()
-        self.drive_left.on(DRIVE_SPEED - K_DRIVING_DIRECTION * heading_compensate, brake= True)
-        self.drive_right.on(DRIVE_SPEED + K_DRIVING_DIRECTION * heading_compensate, brake=True)
+        self.drive_left.on(K_DRIVE_SPEED - K_DRIVING_DIRECTION * heading_compensate, brake= True)
+        self.drive_right.on(K_DRIVE_SPEED + K_DRIVING_DIRECTION * heading_compensate, brake=True)
         self.drive_dist_update()
         self.drive_cycle_end = time.time()
 
@@ -84,7 +85,7 @@ class Drive:
         error = self.gyro.value() - setpoint
         self.gyro_integral += (error * (self.drive_cycle_end-self.drive_cycle_start))
 
-        heading_compensate = error * GYRO_P + self.gyro_integral * GYRO_I
+        heading_compensate = error * K_GYRO_P + self.gyro_integral * K_GYRO_I
 
         self.gyro_last_error = error
         # print(self.elapsed_time() + ' GYRO_PID: ' + str(error), file=sys.stderr, flush = True)
@@ -102,8 +103,8 @@ class Drive:
         self.drive_right.stop()
 
     def drive_dist_update(self):
-        self.dist_left = (self.drive_left.position /360 * EV3_RIM)
-        self.dist_right = (self.drive_right.position / 360 * EV3_RIM)
+        self.dist_left = (self.drive_left.position /360 * K_EV3_RIM)
+        self.dist_right = (self.drive_right.position / 360 * K_EV3_RIM)
         self.dist_travelled = ((self.dist_left + self.dist_right) / 2)
         # self.logged_position.append([self.elapsed_time(), self.dist_travelled*math.cos(math.radians(self.gyro_setpoint)), self.dist_travelled*math.sin(math.radians(self.gyro_setpoint))])
    
@@ -112,17 +113,16 @@ class Drive:
     def drive_indef(self):
         while True:
             self.drive_speed_update(self.gyro_pid_update(0))
-            time.sleep(CYCLE_TIME)
+            time.sleep(K_CYCLE_TIME)
 
     def drive_dist(self, desired_dist):
         self.drive_zero_position()
         while True:
             self.drive_speed_update(self.gyro_pid_update(0))
             self.drive_dist_update()
-            if desired_dist - DIST_ACC <= self.dist_travelled:
+            if desired_dist - K_DIST_ACC <= self.dist_travelled:
                 self.drive_stop()
                 self.drive_dist_update()
-                self.gyro_zero()
                 break
 
     def drive_ultrasonic(self, safe_dist):
@@ -131,25 +131,13 @@ class Drive:
             if self.ultrasonic.value() <= safe_dist:
                 self.drive_stop()
                 self.drive_dist_update()
-                self.gyro_zero()
                 break
 
     # TURNING FUNCTIONS
-
-    # def drive_slow_turn(self, direction):
-    #     current_dir = self.gyro.value()
-    #     setpoint = current_dir + direction        
-    #     while True:
-    #         self.drive_speed_update(self.gyro_pid_update(direction))
-    #         if setpoint - TURNING_ACC < self.gyro.value() < setpoint + TURNING_ACC:
-    #             break
-    #         time.sleep(CYCLE_TIME)
-    #     self.drive_stop()
-
     def drive_spot_turn(self, setpoint):
         while True:
             self.drive_turn_update(self.gyro_pid_update(setpoint))
-            if setpoint - TURNING_ACC <= int(self.gyro.value()) <= setpoint + TURNING_ACC:
+            if setpoint - K_TURNING_ACC <= int(self.gyro.value()) <= setpoint + K_TURNING_ACC:
                 self.drive_stop()
                 self.gyro_zero()
                 break
@@ -172,9 +160,26 @@ class Drive:
             print("ACTION: TEE JUNCTION ", file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(90))
 
-    def drive_rescue_logged_turn(self):
+    def drive_logged_turn(self, victimUltrasonic):
+        raw_positions = [[0,0]]
+        filtered_positions = data.positionFilter(raw_positions)
+ 
+    def id_turn(self, victimUltrasonic, gyroSensor):
+        positionSet = [[]]
+        positionSet.append(victimUltrasonic.value())
+        targetSet = [[]]
         while True:
-            self.drive_turn_update(self.gyro_pid_update(0))
+            self.drive_left.on_for_degrees(2,2)
+            self.drive_right.on_for_degrees(-2,2)
+            if data.rolling_avg_filter(positionSet, victimUltrasonic.value()):
+                self.drive_stop()
+                targetSet.append([gyroSensor.value(), victimUltrasonic.value()])
+                if targetSet.__len__() == 2:
+                    break
+                else:
+                    pass
+        self.drive_spot_turn(targetSet[1][1])
+
 
     # LOGGING
 
