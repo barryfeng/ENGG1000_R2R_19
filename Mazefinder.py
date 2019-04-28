@@ -29,6 +29,7 @@ try:
     victimUltrasonicSensor = UltrasonicSensor(INPUT_1)
 except:
     victimUltrasonicSensor = 1
+    data.cprint('error: VICTIM ULTRASONIC SENSOR IS NOT PLUGGED IN')
 
 # UltrasonicSensor(INPUT_1)
 colorSensor = ColorSensor(INPUT_2)
@@ -42,14 +43,17 @@ def elapsed_time():
     return str(time.time() - start_time)
 
 def init_robot():
-    print(elapsed_time() + ': INIT ROBOT', file = sys.stderr, flush = True)
+    print('LOCAL: INIT ROBOT', file = sys.stderr, flush = True)
     drive.drive_init()
 
 def main():
-    # maze()
-    incline()
+    maze()
+    # incline()
     # identify()
     # drive.retract_claw()
+    # drive.zero_claw()
+    # identify()
+
     # maze()
 
 def terrain():
@@ -65,19 +69,8 @@ def incline():
 def identify():
     drive.find_target()                                                                                                                                                       
     drive.id()
-
-
-# def complianceTest():
-#     print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
-#     complianceTurn()
-#     complianceDrive()
-#     print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
-
-# def complianceTurn():
-#     drive.drive_spot_turn(data.gyroSetpoint(-90))
-
-# def complianceDrive():
-#     drive.drive_dist(data.distSetpoint(1200))
+    drive.find_target()                                                                                                                                   
+    drive.id()
 
 def maze():
     while True:
@@ -86,7 +79,7 @@ def maze():
         else:
             valueSet = us_arm.us_maze_detect()
             drive.cycle_search(valueSet)
-
+            
 if __name__ == '__main__':
     init_robot()
     main()

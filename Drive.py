@@ -44,13 +44,15 @@ class Drive:
 
         self.driving_direction = Direction.WHEELSIDE
 
+        self.target_loc = 0
+
     def elapsed_time(self):
         return str(time.time() - self.start_time)
 
     def gyro_calibrate(self):
-        print('INIT: GYRO CALIBRATION', file = sys.stderr, flush = True)
+        print('LOCAL: START GYRO CALIBRATION', file = sys.stderr, flush = True)
         self.gyro_zero()
-        print('END: GYRO CALIBRATION', file = sys.stderr, flush = True)
+        print('LOCAL: END GYRO CALIBRATION', file = sys.stderr, flush = True)
 
     def gyro_zero(self):
         time.sleep(1)
@@ -68,7 +70,7 @@ class Drive:
 
     def set_drive_direction(self, direction):
         self.driving_direction = direction
-        print('ALERT: DRIVING DIRECTION CHANGED - ' + str(self.driving_direction), file =sys.stderr)
+        print('WARN: DRIVING DIRECTION CHANGED - ' + str(self.driving_direction), file =sys.stderr)
         if self.driving_direction == Direction.WHEELSIDE:
             self.drive_left.polarity = self.drive_left.POLARITY_INVERSED
             self.drive_right.polarity = self.drive_right.POLARITY_INVERSED
@@ -78,7 +80,7 @@ class Drive:
             self.drive_right.polarity = self.drive_right.POLARITY_NORMAL
             self.driving_direction == Direction.CLAWSIDE
         else:
-            print("ERROR: INVALID DRIVING DIRECTION, USING WHEELSIDE", file = sys.stderr)
+            print("error: INVALID DRIVING DIRECTION, USING WHEELSIDE", file = sys.stderr)
             self.drive_left.polarity = self.drive_left.POLARITY_NORMAL
             self.drive_right.polarity = self.drive_right.POLARITY_NORMAL
             self.driving_direction == Direction.WHEELSIDE.value
@@ -153,7 +155,8 @@ class Drive:
     def drive_victim_ultrasonic(self, safe_dist):
         while True:
             self.drive_speed_update(self.gyro_pid_update(0))
-            if self.victimUltrasonic.value() <= safe_dist:
+            # data.cprint(self.dist_travelled)
+            if self.victimUltrasonic.value() <= safe_dist or 500 <= self.dist_travelled:
                 self.drive_stop()
                 break
 
@@ -189,6 +192,7 @@ class Drive:
         while True:                
             self.drive_left.on(10)
             self.drive_right.on(-10)
+            # data.cprint(self.victimUltrasonic.value())
             if self.victimUltrasonic.value() < 400:
                 self.drive_stop()
                 self.find_target_center()
@@ -198,34 +202,47 @@ class Drive:
         edge_initial = self.gyro.value()
         edge_final = 0
         while True:
-            self.drive_left.on(3)
-            self.drive_right.on(-3)
+            self.drive_left.on(10)
+            self.drive_right.on(-10)
             if self.victimUltrasonic.value() > 400:
                 self.drive_stop()
                 edge_final = self.gyro.value()
                 break
-        self.drive_spot_turn(data.average(edge_initial, edge_final))
+        self.drive_spot_turn(data.average(edge_initial, edge_final)-2)
         self.approach_target()
 
     def approach_target(self):
         self.set_drive_direction(Direction.CLAWSIDE)
-        self.drive_victim_ultrasonic(40)
+        self.drive_victim_ultrasonic(30)
 
     def id(self):
         while True:
-            if self.color.value() == 2:
-                print('BLUE', file = sys.stderr)
-                data.setLed('GREEN')
-                time.sleep(300)
+            if self.color.value() == 2 or self.color.value() == 1:
+                data.cprint('LOCAL: FALSE VICTIM FOUND - BLUE')
+                data.setLed('RED')
+                self.target_loc = self.gyro.value()
+                self.set_drive_direction(Direction.WHEELSIDE)
+                time.sleep(1)
+                data.setLedOff()
+                self.drive_dist(self.dist_travelled)
+                self.gyro_zero()
+                self.drive_spot_turn(15)
                 break
             elif self.color.value() == 5:
-                print('RED', file = sys.stderr)
-                data.setLed('RED')
-                time.sleep(300)
+                data.cprint('LOCAL: TRUE VICTIM FOUND - RED')
+                data.setLed('GREEN')
+                self.target_loc = self.gyro.value()
+                self.set_drive_direction(Direction.WHEELSIDE)
+                time.sleep(1)
+                data.setLedOff()
+                self.drive_dist(self.dist_travelled)
+                self.gyro_zero()
+                self.drive_spot_turn(15)
                 break
             else:
-                print('INVALID COLOR', file = sys.stderr)
+                data.cprint('WARN: UNIDENTIFIABLE VICTIM FOUND - INVALID COLOR' + str(self.color.value()))
                 data.setLedOff()
+                time.sleep(1)
         
 
     # LOGGING
@@ -250,6 +267,9 @@ class Drive:
     
     def extend_claw(self):
         self.claw.on_to_position(100,0)
+
+    def zero_claw(self):
+        self.claw.on_to_position(100,-2100)
 
 class Direction(Enum):
     CLAWSIDE = -1
