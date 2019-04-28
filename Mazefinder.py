@@ -23,16 +23,14 @@ leftMotor = LargeMotor(OUTPUT_A)
 rightMotor = LargeMotor(OUTPUT_B)
 ultrasonicMotor = MediumMotor(OUTPUT_C)
 clawMotor = MediumMotor(OUTPUT_D)
+colorSensor = ColorSensor(INPUT_2)
 gyroSensor = GyroSensor(INPUT_3)
 ultrasonicSensor = UltrasonicSensor(INPUT_4)
 try:
     victimUltrasonicSensor = UltrasonicSensor(INPUT_1)
 except:
     victimUltrasonicSensor = 1
-    data.cprint('error: VICTIM ULTRASONIC SENSOR IS NOT PLUGGED IN')
-
-# UltrasonicSensor(INPUT_1)
-colorSensor = ColorSensor(INPUT_2)
+    data.cprint('FATAL: VICTIM ULTRASONIC SENSOR IS NOT PLUGGED IN')
 
 drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor, colorSensor, victimUltrasonicSensor, clawMotor, start_time)
 us_arm = UltrasonicArm(ultrasonicMotor, gyroSensor, ultrasonicSensor)
@@ -43,21 +41,19 @@ def elapsed_time():
     return str(time.time() - start_time)
 
 def init_robot():
-    print('LOCAL: INIT ROBOT', file = sys.stderr, flush = True)
+    print('WARNING: INIT ROBOT', file = sys.stderr, flush = True)
     drive.drive_init()
 
 def main():
-    maze()
-    # incline()
-    # identify()
+    # maze()
+    incline()
     # drive.retract_claw()
     # drive.zero_claw()
     # identify()
-
-    # maze()
+    # rescue()
+    # terrain()
 
 def terrain():
-    # drive.retract_claw()
     drive.drive_indef()
 
 def obstacles():
@@ -67,10 +63,14 @@ def incline():
     drive.drive_indef()
 
 def identify():
-    drive.find_target()                                                                                                                                                       
+    drive.find_target(1)                                                                                                                                                       
     drive.id()
-    drive.find_target()                                                                                                                                   
+    drive.find_target(2)                                                                                                                                   
     drive.id()
+
+def rescue():
+    drive.find_target(1)
+    drive.grasp_target()                                                                                                                                                     
 
 def maze():
     while True:
@@ -79,9 +79,8 @@ def maze():
         else:
             valueSet = us_arm.us_maze_detect()
             drive.cycle_search(valueSet)
-            
+
 if __name__ == '__main__':
     init_robot()
     main()
     drive.create_gyro_csv()
-    # drive.create_position_csv()
