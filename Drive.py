@@ -8,18 +8,22 @@ from enum import Enum
 from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor
 from ev3dev2.motor import MoveTank
 from threading import Thread
+from enum import Enum
 
 import time, sys, syslog, csv
 
 data = Data()
 
 class Drive:
-    def __init__(self, drive_left, drive_right, gyro, ultrasonic, start_time):
+    def __init__(self, drive_left, drive_right, gyro, ultrasonic, colourSensor, victimUltrasonic, clawMotor, start_time):
         self.drive_left = drive_left
         self.drive_right = drive_right
         self.gyro = gyro
         self.ultrasonic = ultrasonic
+        self.victimUltrasonic = victimUltrasonic
+        self.color = colourSensor
         self.start_time = start_time
+        self.claw = clawMotor
 
         self.dist_left = 0
         self.dist_right = 0
@@ -38,6 +42,8 @@ class Drive:
         self.drive_cycle_start = 0
         self.drive_cycle_end = 0
 
+        self.driving_direction = Direction.WHEELSIDE
+
     def elapsed_time(self):
         return str(time.time() - self.start_time)
 
@@ -53,18 +59,29 @@ class Drive:
         time.sleep(1)
 
     def drive_init(self):
-        if K_DRIVING_DIRECTION == 1:
-            self.drive_left.polarity = self.drive_left.POLARITY_INVERSED
-            self.drive_right.polarity = self.drive_right.POLARITY_INVERSED
-        elif K_DRIVING_DIRECTION == -1:
-            self.drive_left.polarity = self.drive_left.POLARITY_NORMAL
-            self.drive_right.polarity = self.drive_right.POLARITY_NORMAL
-        else:
-            print("ERROR: INVALID DRIVING DIRECTION", file = sys.stderr)
+        self.set_drive_direction(Direction.WHEELSIDE)
+        self.color.mode = 'COL-COLOR'
         self.drive_zero_position()
         self.drive_left.stop_action = self.drive_left.STOP_ACTION_HOLD
         self.drive_right.stop_action = self.drive_right.STOP_ACTION_HOLD
         self.gyro_calibrate()
+
+    def set_drive_direction(self, direction):
+        self.driving_direction = direction
+        print('ALERT: DRIVING DIRECTION CHANGED - ' + str(self.driving_direction), file =sys.stderr)
+        if self.driving_direction == Direction.WHEELSIDE:
+            self.drive_left.polarity = self.drive_left.POLARITY_INVERSED
+            self.drive_right.polarity = self.drive_right.POLARITY_INVERSED
+            self.driving_direction == Direction.WHEELSIDE
+        elif self.driving_direction == Direction.CLAWSIDE:
+            self.drive_left.polarity = self.drive_left.POLARITY_NORMAL
+            self.drive_right.polarity = self.drive_right.POLARITY_NORMAL
+            self.driving_direction == Direction.CLAWSIDE
+        else:
+            print("ERROR: INVALID DRIVING DIRECTION, USING WHEELSIDE", file = sys.stderr)
+            self.drive_left.polarity = self.drive_left.POLARITY_NORMAL
+            self.drive_right.polarity = self.drive_right.POLARITY_NORMAL
+            self.driving_direction == Direction.WHEELSIDE.value
 
     def drive_zero_position(self):
         self.drive_left.position = 0
@@ -72,14 +89,14 @@ class Drive:
 
     def drive_speed_update(self, heading_compensate):
         self.drive_cycle_start = time.time()
-        self.drive_left.on(K_DRIVE_SPEED - K_DRIVING_DIRECTION * heading_compensate, brake= True)
-        self.drive_right.on(K_DRIVE_SPEED + K_DRIVING_DIRECTION * heading_compensate, brake=True)
+        self.drive_left.on(K_DRIVE_SPEED - self.driving_direction.value * heading_compensate, brake= True)
+        self.drive_right.on(K_DRIVE_SPEED + self.driving_direction.value * heading_compensate, brake=True)
         self.drive_dist_update()
         self.drive_cycle_end = time.time()
 
     def drive_turn_update(self, heading_compensate):
-        self.drive_left.on(K_DRIVING_DIRECTION * K_TURNING_SPEED * - heading_compensate, brake= True)
-        self.drive_right.on(K_DRIVING_DIRECTION * K_TURNING_SPEED * heading_compensate, brake=True)
+        self.drive_left.on(self.driving_direction.value * K_TURNING_SPEED * - heading_compensate, brake= True)
+        self.drive_right.on(self.driving_direction.value * K_TURNING_SPEED * heading_compensate, brake=True)
 
     def gyro_pid_update(self, setpoint):
         error = self.gyro.value() - setpoint
@@ -133,6 +150,13 @@ class Drive:
                 self.drive_dist_update()
                 break
 
+    def drive_victim_ultrasonic(self, safe_dist):
+        while True:
+            self.drive_speed_update(self.gyro_pid_update(0))
+            if self.victimUltrasonic.value() <= safe_dist:
+                self.drive_stop()
+                break
+
     # TURNING FUNCTIONS
     def drive_spot_turn(self, setpoint):
         while True:
@@ -160,26 +184,49 @@ class Drive:
             print("ACTION: TEE JUNCTION ", file = sys.stderr)
             self.drive_spot_turn(data.gyroSetpoint(90))
 
-    def drive_logged_turn(self, victimUltrasonic):
-        raw_positions = [[0,0]]
-        filtered_positions = data.positionFilter(raw_positions)
- 
-    def id_turn(self, victimUltrasonic, gyroSensor):
-        positionSet = [[]]
-        positionSet.append(victimUltrasonic.value())
-        targetSet = [[]]
-        while True:
-            self.drive_left.on_for_degrees(2,2)
-            self.drive_right.on_for_degrees(-2,2)
-            if data.rolling_avg_filter(positionSet, victimUltrasonic.value()):
+    def find_target(self):
+        data.setLedOff()
+        while True:                
+            self.drive_left.on(10)
+            self.drive_right.on(-10)
+            if self.victimUltrasonic.value() < 400:
                 self.drive_stop()
-                targetSet.append([gyroSensor.value(), victimUltrasonic.value()])
-                if targetSet.__len__() == 2:
-                    break
-                else:
-                    pass
-        self.drive_spot_turn(targetSet[1][1])
+                self.find_target_center()
+                break
 
+    def find_target_center(self):
+        edge_initial = self.gyro.value()
+        edge_final = 0
+        while True:
+            self.drive_left.on(3)
+            self.drive_right.on(-3)
+            if self.victimUltrasonic.value() > 400:
+                self.drive_stop()
+                edge_final = self.gyro.value()
+                break
+        self.drive_spot_turn(data.average(edge_initial, edge_final))
+        self.approach_target()
+
+    def approach_target(self):
+        self.set_drive_direction(Direction.CLAWSIDE)
+        self.drive_victim_ultrasonic(40)
+
+    def id(self):
+        while True:
+            if self.color.value() == 2:
+                print('BLUE', file = sys.stderr)
+                data.setLed('GREEN')
+                time.sleep(300)
+                break
+            elif self.color.value() == 5:
+                print('RED', file = sys.stderr)
+                data.setLed('RED')
+                time.sleep(300)
+                break
+            else:
+                print('INVALID COLOR', file = sys.stderr)
+                data.setLedOff()
+        
 
     # LOGGING
 
@@ -196,3 +243,14 @@ class Drive:
     #     with position_file:  
     #         writer = csv.writer(position_file, dialect='dialect')
     #         writer.writerows(self.logged_position)
+
+    # CLAW
+    def retract_claw(self):
+        self.claw.on_to_position(100, 2100)
+    
+    def extend_claw(self):
+        self.claw.on_to_position(100,0)
+
+class Direction(Enum):
+    CLAWSIDE = -1
+    WHEELSIDE = 1

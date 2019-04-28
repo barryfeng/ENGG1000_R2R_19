@@ -19,17 +19,21 @@ import datetime, time, sys, csv
 start_time = time.time()
 data = Data()
 
+leftMotor = LargeMotor(OUTPUT_A)
+rightMotor = LargeMotor(OUTPUT_B)
+ultrasonicMotor = MediumMotor(OUTPUT_C)
+clawMotor = MediumMotor(OUTPUT_D)
+gyroSensor = GyroSensor(INPUT_3)
+ultrasonicSensor = UltrasonicSensor(INPUT_4)
 try:
-    leftMotor = LargeMotor(OUTPUT_A)
-    rightMotor = LargeMotor(OUTPUT_B)
-    ultrasonicMotor = MediumMotor(OUTPUT_C)
-    gyroSensor = GyroSensor(INPUT_1)
-    ultrasonicSensor = UltrasonicSensor(INPUT_2)
+    victimUltrasonicSensor = UltrasonicSensor(INPUT_1)
+except:
+    victimUltrasonicSensor = 1
 
-except DeviceNotFound as connection_error:
-    print(connection_error, file = sys.stderr)
+# UltrasonicSensor(INPUT_1)
+colorSensor = ColorSensor(INPUT_2)
 
-drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor , start_time)
+drive = Drive(leftMotor, rightMotor, gyroSensor, ultrasonicSensor, colorSensor, victimUltrasonicSensor, clawMotor, start_time)
 us_arm = UltrasonicArm(ultrasonicMotor, gyroSensor, ultrasonicSensor)
 
 mazealg = MazeAlgorithm()
@@ -43,30 +47,42 @@ def init_robot():
 
 def main():
     # maze()
-    terrain()
+    incline()
+    # identify()
+    # drive.retract_claw()
+    # maze()
 
 def terrain():
+    # drive.retract_claw()
     drive.drive_indef()
 
 def obstacles():
     drive.drive_indef()
 
-def complianceTest():
-    print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
-    complianceTurn()
-    complianceDrive()
-    print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
+def incline():
+    drive.drive_indef()
 
-def complianceTurn():
-    drive.drive_spot_turn(data.gyroSetpoint(-90))
+def identify():
+    drive.find_target()                                                                                                                                                       
+    drive.id()
 
-def complianceDrive():
-    drive.drive_dist(data.distSetpoint(1200))
+
+# def complianceTest():
+#     print("INIT: COMPLIANCE TURN READY", file = sys.stderr)
+#     complianceTurn()
+#     complianceDrive()
+#     print("END: COMPLIANCE TURN COMPLETE", file = sys.stderr)
+
+# def complianceTurn():
+#     drive.drive_spot_turn(data.gyroSetpoint(-90))
+
+# def complianceDrive():
+#     drive.drive_dist(data.distSetpoint(1200))
 
 def maze():
     while True:
-        if ultrasonicSensor.value() > US_SAFE_DIST:
-            drive.drive_ultrasonic(US_SAFE_DIST)
+        if ultrasonicSensor.value() > K_US_SAFE_DIST:
+            drive.drive_ultrasonic(K_US_SAFE_DIST)
         else:
             valueSet = us_arm.us_maze_detect()
             drive.cycle_search(valueSet)
