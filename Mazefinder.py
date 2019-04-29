@@ -45,13 +45,11 @@ def init_robot():
     drive.drive_init()
 
 def main():
-    # maze()
-    incline()
-    # drive.retract_claw()
-    # drive.zero_claw()
+    # incline()
     # identify()
     # rescue()
     # terrain()
+    pass
 
 def terrain():
     drive.drive_indef()

@@ -156,7 +156,7 @@ class Drive:
         while True:
             self.drive_speed_update(self.gyro_pid_update(0))
             # data.cprint(self.dist_travelled)
-            if self.victimUltrasonic.value() <= safe_dist or 550 <= self.dist_travelled:
+            if self.victimUltrasonic.value() <= safe_dist or 500 <= self.dist_travelled:
                 self.drive_stop()
                 break
 
@@ -188,12 +188,13 @@ class Drive:
             self.drive_spot_turn(data.gyroSetpoint(90))
 
     def find_target(self, run):
+        self.retract_claw()
         data.setLedOff()
         while True:                
-            self.drive_left.on(8)
-            self.drive_right.on(-8)
+            self.drive_left.on(6)
+            self.drive_right.on(-6)
             # data.cprint(self.victimUltrasonic.value())
-            if self.victimUltrasonic.value() < 500:
+            if self.victimUltrasonic.value() < 350:
                 self.drive_stop()
                 self.find_target_center(run)
                 break
@@ -202,9 +203,9 @@ class Drive:
         edge_initial = self.gyro.value()
         edge_final = 0
         while True:
-            self.drive_left.on(10)
-            self.drive_right.on(-10)
-            if self.victimUltrasonic.value() > 500:
+            self.drive_left.on(6)
+            self.drive_right.on(-6)
+            if self.victimUltrasonic.value() > 350:
                 self.drive_stop()
                 edge_final = self.gyro.value()
                 break
@@ -212,20 +213,21 @@ class Drive:
         range = edge_final - edge_initial
         # data.cprint('AVG::::: ' + str(avg) + ' RANGE: ' + str(range))
         if 90 <= range and run == 1:
-            self.drive_spot_turn(avg-4)
+            self.drive_spot_turn(avg+10)
         elif 90 <= range and run == 2:
-            self.drive_spot_turn(avg-5)
+            self.drive_spot_turn(avg+6)
         else:
             self.drive_spot_turn(edge_initial+30)
         self.approach_target()
 
     def approach_target(self):
+        self.extend_claw()
         self.set_drive_direction(Direction.CLAWSIDE)
-        self.drive_victim_ultrasonic(25)
+        self.drive_victim_ultrasonic(15)
 
     def id(self):
         while True:
-            if self.color.value() == 2 or self.color.value() == 1:
+            if self.color.value() == 2 or self.color.value() == 1 or self.color.value() == 3:
                 data.cprint('LOCAL: FALSE VICTIM FOUND - BLUE')
                 data.setLed('RED')
                 self.target_loc = self.gyro.value()
@@ -249,9 +251,6 @@ class Drive:
                 self.dist_travelled = 0
                 self.drive_spot_turn(15)
                 break
-            elif self.color.value() == 0:
-                self.drive_left.on_for_degrees(-50,5)
-                self.drive_right.on_for_degrees(50,5)
             else:
                 data.cprint('INFO: UNIDENTIFIABLE VICTIM FOUND - INVALID COLOR' + str(self.color.value()))
                 data.setLedOff()
@@ -262,6 +261,7 @@ class Drive:
         self.set_drive_direction(Direction.WHEELSIDE)
         self.drive_dist(600)
         self.extend_claw()
+        self.drive_dist(200)
 
 
     # LOGGING

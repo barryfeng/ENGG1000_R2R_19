@@ -11,6 +11,8 @@ K_USARM_P = 0.0
 K_GYRO_P = 0.95
 K_GYRO_I = 0
 
+K_CLAW_MAX = 2100
+
 #Errors
 K_TURNING_ACC = 0.5 # +- DEG
 K_DIST_ACC = 5 # +- MM
